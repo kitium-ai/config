@@ -1,0 +1,35 @@
+{
+  "name": "@kitiumai/config",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Shared configuration presets (TypeScript, formatting, and tooling) for the KitiumAI monorepo.",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./prettier.config.cjs": "./prettier.config.cjs",
+    "./jest.config.base.js": "./jest.config.base.js",
+    "./vitest.config.base.js": "./vitest.config.base.js",
+    "./playwright.config.base.js": "./playwright.config.base.js",
+    "./package.template.json": "./package.template.json",
+    "./packageBase.cjs": "./packageBase.cjs"
+  },
+  "files": [
+    "README.md",
+    "tsconfig.base.json",
+    "prettier.config.cjs",
+    "jest.config.base.js",
+    "vitest.config.base.js",
+    "playwright.config.base.js",
+    "package.template.json",
+    "packageBase.cjs"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "kitiumai",
+    "config",
+    "typescript",
+    "prettier"
+  ],
+  "license": "MIT"
+}

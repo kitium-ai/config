@@ -1,0 +1,36 @@
+/**
+ * Common package.json shape for KitiumAI packages.
+ * Intended for use in scaffolding scripts (merge and override per-package fields).
+ */
+const base = {
+  version: "0.1.0",
+  type: "module",
+  main: "dist/index.js",
+  types: "dist/index.d.ts",
+  files: ["dist"],
+  license: "MIT",
+  engines: {
+    node: ">=18.0.0"
+  },
+  publishConfig: {
+    access: "public"
+  },
+  scripts: {
+    build: "tsc -b",
+    typecheck: "tsc -b --noEmit",
+    lint: "eslint .",
+    "lint:fix": "eslint . --fix",
+    test: "vitest run",
+    "test:watch": "vitest watch",
+    format: "prettier --check .",
+    "format:fix": "prettier --write ."
+  },
+  devDependencies: {
+    typescript: "^5.3.0",
+    eslint: "^8.0.0",
+    prettier: "^3.0.0",
+    vitest: "^1.0.0"
+  }
+};
+
+module.exports = base;
