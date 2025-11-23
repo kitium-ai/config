@@ -1,6 +1,6 @@
 {
   "name": "@kitiumai/config",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "description": "Shared configuration presets (TypeScript, formatting, and tooling) for the KitiumAI monorepo.",
   "exports": {
@@ -29,7 +29,13 @@
     "kitiumai",
     "config",
     "typescript",
-    "prettier"
+    "prettier",
+    "typescript",
+    "jest",
+    "vitest",
+    "playwright",
+    "changeset",
+    "package"
   ],
   "license": "MIT",
   "repository": {
@@ -41,14 +47,21 @@
   },
   "homepage": "https://github.com/kitium-ai/config#readme",
   "scripts": {
-    "changeset": "node ../../scripts/bin/ensure-changeset.js && changeset",
+    "changeset": "ensure-changeset && changeset",
     "version": "changeset version",
-    "publish:set-token": "node ../../scripts/bin/set-npm-token.js",
-    "publish:setup": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const token=process.env.NPM_TOKEN;if(!token){console.error('Error: NPM_TOKEN environment variable not set');process.exit(1);}const isWindows=os.platform()==='win32';const homeNpmrc=path.join(os.homedir(),isWindows?'.npmrc':'.npmrc');let content='';if(fs.existsSync(homeNpmrc)){content=fs.readFileSync(homeNpmrc,'utf8');}const lines=content.split('\\n').filter(l=>!l.includes('//registry.npmjs.org/:_authToken'));lines.push('//registry.npmjs.org/:_authToken='+token);fs.writeFileSync(homeNpmrc,lines.join('\\n')+'\\n');console.log('✓ Updated user-level .npmrc with authentication');\"",
-    "publish:check": "npm whoami --registry https://registry.npmjs.org || (echo 'Error: Not logged in to npm. Set NPM_TOKEN or run: npm login' && exit 1)",
-    "publish:package": "pnpm run publish:setup && pnpm publish --access public --no-git-checks --registry https://registry.npmjs.org",
-    "publish:dry-run": "pnpm run publish:setup && pnpm publish --access public --no-git-checks --dry-run --registry https://registry.npmjs.org",
+    "publish:set-token": "set-npm-token",
+    "publish:setup": "set-npm-token",
+    "publish:check": "npm whoami --registry https://registry.npmjs.org || npm login --registry https://registry.npmjs.org",
+    "publish:login": "npm login --registry https://registry.npmjs.org",
+    "publish:package": "pnpm run publish:check && pnpm publish --access public --no-git-checks --registry https://registry.npmjs.org",
+    "publish:package:token": "pnpm run publish:setup && pnpm publish --access public --no-git-checks --registry https://registry.npmjs.org",
+    "publish:package:otp": "pnpm run publish:check && pnpm publish --access public --no-git-checks --registry https://registry.npmjs.org --otp",
+    "publish:dry-run": "pnpm publish --access public --no-git-checks --dry-run --registry https://registry.npmjs.org",
+    "publish:dry-run:token": "pnpm run publish:setup && pnpm publish --access public --no-git-checks --dry-run --registry https://registry.npmjs.org",
     "release": "pnpm version && pnpm install --lockfile-only"
+  },
+  "dependencies": {
+    "@kitiumai/scripts": "^0.1.0"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1"
