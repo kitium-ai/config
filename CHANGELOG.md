@@ -1,6 +1,8 @@
 # Changelog
 
-# Changelog
+## 0.1.3
+
+- fix added for base config and package type module
 
 ## 0.1.1
 
