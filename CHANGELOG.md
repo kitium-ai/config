@@ -1,5 +1,14 @@
 # Changelog
 
+# Changelog
+
+## 0.1.1
+
+- Added security-focused ESLint preset and Gitleaks baseline config.
+- Added git workflow helpers (commitlint, lint-staged, EditorConfig).
+- Added documentation and UI presets (Typedoc, Storybook).
+- Added release automation templates (semantic-release + Changesets).
+
 ## 0.1.0
 
 - Initial publishable config package.

@@ -1,6 +1,6 @@
 {
   "name": "@kitiumai/config",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": false,
   "description": "Shared configuration presets (TypeScript, formatting, and tooling) for the KitiumAI monorepo.",
   "exports": {
@@ -9,8 +9,18 @@
     "./jest.config.base.js": "./jest.config.base.js",
     "./vitest.config.base.js": "./vitest.config.base.js",
     "./playwright.config.base.js": "./playwright.config.base.js",
+    "./eslint.config.base.js": "./eslint.config.base.js",
+    "./eslint.config.security.js": "./eslint.config.security.js",
     "./package.template.json": "./package.template.json",
-    "./packageBase.cjs": "./packageBase.cjs"
+    "./packageBase.cjs": "./packageBase.cjs",
+    "./commitlint.config.cjs": "./commitlint.config.cjs",
+    "./lint-staged.config.cjs": "./lint-staged.config.cjs",
+    "./gitleaks.toml": "./gitleaks.toml",
+    "./semantic-release.config.base.cjs": "./semantic-release.config.base.cjs",
+    "./typedoc.config.base.cjs": "./typedoc.config.base.cjs",
+    "./storybook.main.base.cjs": "./storybook.main.base.cjs",
+    "./changeset.config.base.json": "./changeset.config.base.json",
+    "./editorconfig.base": "./editorconfig.base"
   },
   "files": [
     "README.md",
@@ -19,8 +29,18 @@
     "jest.config.base.js",
     "vitest.config.base.js",
     "playwright.config.base.js",
+    "eslint.config.base.js",
+    "eslint.config.security.js",
     "package.template.json",
-    "packageBase.cjs"
+    "packageBase.cjs",
+    "commitlint.config.cjs",
+    "lint-staged.config.cjs",
+    "gitleaks.toml",
+    "semantic-release.config.base.cjs",
+    "typedoc.config.base.cjs",
+    "storybook.main.base.cjs",
+    "changeset.config.base.json",
+    "editorconfig.base"
   ],
   "publishConfig": {
     "access": "public"
@@ -61,7 +81,15 @@
     "release": "pnpm version && pnpm install --lockfile-only"
   },
   "dependencies": {
-    "@kitiumai/scripts": "^0.1.0"
+    "@commitlint/config-conventional": "^18.6.3",
+    "@kitiumai/scripts": "^0.2.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.0",
+    "@semantic-release/npm": "^11.0.1",
+    "@semantic-release/release-notes-generator": "^13.0.0",
+    "eslint-plugin-security": "^3.0.1"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1"

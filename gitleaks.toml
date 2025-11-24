@@ -1,0 +1,33 @@
+# Shared Gitleaks configuration for KitiumAI
+# Mirrors GitHub Advanced Security defaults with a few Kitium-specific tweaks.
+
+title = "KitiumAI Secret Scanning Baseline"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Ignore test data, fixtures, and generated mocks"
+regexes = [
+  '''(?i)test[_-]?fixtures?''',
+  '''(?i)mock[_-]?data''',
+  '''(?i)snapshot''',
+]
+files = [
+  '''(?i)testdata''',
+  '''(?i)fixtures''',
+  '''(?i)snapshots''',
+]
+
+[[rules]]
+description = "KitiumAI generic API key"
+id = "kitiumai-generic-api-key"
+regex = '''(?i)(kitium|weave)([_-]?(api)?[_-]?key|[_-]?token)\s*[:=]\s*['"]?[0-9a-zA-Z_\-]{32,}['"]?'''
+tags = ["key", "kitiumai"]
+
+[[rules]]
+description = "KitiumAI internal host token"
+id = "kitiumai-internal-host-token"
+regex = '''(?i)(kitium|weave)[-_]?(stg|prod)[-_]?token\s*[:=]\s*['"]?[0-9a-z]{24,}['"]?'''
+tags = ["token", "kitiumai"]
+
