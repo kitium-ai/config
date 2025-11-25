@@ -2,6 +2,102 @@
 
 Central place for settings that should be reused across packages and apps.
 
+## Quick Start
+
+The easiest way to set up configs in your repository is using the interactive CLI tool:
+
+```bash
+# Install the package
+pnpm add -D @kitiumai/config
+
+# Run the interactive setup
+npx kitiumai-config
+
+# Or run in a specific directory
+npx kitiumai-config /path/to/repo
+
+# Non-interactive mode with auto-detection
+npx kitiumai-config --auto
+
+# Preview changes without applying
+npx kitiumai-config --dry-run
+```
+
+The CLI tool will:
+- 🔍 Detect your package type (Library, App, Next.js, CLI, Monorepo)
+- 📋 Suggest appropriate configuration groups
+- ❓ Prompt you for configuration choices
+- 📝 Generate all necessary config files
+- ⚠️  Warn about existing files (with option to override)
+
+## CLI Tool
+
+### Installation
+
+```bash
+pnpm add -D @kitiumai/config
+```
+
+### Usage
+
+```bash
+kitiumai-config [options] [target-dir]
+```
+
+### Options
+
+- `--auto` - Non-interactive mode with auto-detected defaults
+- `--dry-run` - Preview changes without actually creating/modifying files
+- `--force` - Override existing files without prompting
+- `--help, -h` - Show help message
+
+### Examples
+
+```bash
+# Interactive setup in current directory
+kitiumai-config
+
+# Setup in specific directory
+kitiumai-config /path/to/repo
+
+# Non-interactive with defaults
+kitiumai-config --auto
+
+# Preview changes without applying
+kitiumai-config --dry-run
+
+# Force override existing files
+kitiumai-config --force
+```
+
+### Configuration Groups
+
+The tool supports the following configuration groups:
+
+- **Core** - TypeScript, ESLint, Prettier
+- **Testing** - Jest, Vitest, Playwright
+- **Docs** - TypeDoc, Storybook
+- **Release** - CommitLint, Semantic Release, Changesets
+- **Security** - ESLint Security, Gitleaks
+- **Git Hooks** - Lint-Staged, Husky (requires manual setup)
+- **Editor** - EditorConfig
+
+### What Gets Generated
+
+The tool creates configuration files that extend the base configs from `@kitiumai/config`:
+
+- `tsconfig.json` - Extends `@kitiumai/config/tsconfig.base.json`
+- `.prettierrc.cjs` - Requires `@kitiumai/config/prettier.config.cjs`
+- `eslint.config.js` - Imports `@kitiumai/config/eslint.config.base.js`
+- `vitest.config.ts` - Extends `@kitiumai/config/vitest.config.base.js`
+- And more based on your selections...
+
+### Notes
+
+- The tool respects existing files by default (won't overwrite unless `--force` is used)
+- Git hooks (Husky) setup requires manual installation: `pnpm add -D husky && npx husky install`
+- Make sure `@kitiumai/config` is installed as a dependency before running the tool
+
 ## TypeScript
 
 - `@kitiumai/config/tsconfig.base.json`: Strict base with language/runtime defaults and interop flags. Extend it from package-level `tsconfig.json` and set project-specific fields (`baseUrl`, `paths`, `rootDir`, `outDir`, `include`/`exclude`).

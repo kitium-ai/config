@@ -74,7 +74,7 @@ export default [
         },
         {
           selector: 'enumMember',
-          format: ['UPPER_CASE'],
+          format: ['PascalCase', 'UPPER_CASE'],
         },
       ],
       // Import Rules
@@ -88,7 +88,7 @@ export default [
       'no-console': [
         'warn',
         {
-          allow: ['warn', 'error'],
+          allow: ['warn', 'error', 'log'],
         },
       ],
       'no-debugger': 'error',

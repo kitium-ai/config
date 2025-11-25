@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.1.4
+
+### Added
+
+- **Interactive CLI tool for config migration/setup** - New `kitiumai-config` command-line tool that helps set up and migrate configuration files in consumer repositories
+  - Automatic package type detection (Library, App, Next.js, CLI, Monorepo)
+  - Interactive prompts for configuration group selection
+  - Smart suggestions based on detected package type
+  - Support for dry-run mode to preview changes
+  - Auto mode for non-interactive setup
+  - Force mode to override existing files
+  - Comprehensive file generation for all supported config types
+  - Safety features: warns about existing files, supports override confirmation
+
+### Features
+
+- CLI tool detects existing configurations and suggests appropriate setup
+- Generates config files that properly extend base configs from `@kitiumai/config`
+- Supports all configuration groups: Core, Testing, Docs, Release, Security, Git Hooks, Editor
+- Interactive and non-interactive modes for different use cases
+- Detailed output showing created/modified files and warnings
+
+### Usage
+
+```bash
+# Install
+pnpm add -D @kitiumai/config
+
+# Run interactive setup
+npx kitiumai-config
+
+# Non-interactive mode
+npx kitiumai-config --auto
+
+# Preview changes
+npx kitiumai-config --dry-run
+```
+
 ## 0.1.3
 
 - fix added for base config and package type module
