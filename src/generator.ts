@@ -1,5 +1,6 @@
-import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { ConfigFile, ConfigGroup, SetupChoices, configGroupMap } from './types.js';
 
 interface ConfigTemplate {
@@ -17,9 +18,11 @@ export class ConfigGenerator {
   private readonly filesCreated: string[] = [];
   private readonly filesModified: string[] = [];
   private readonly warnings: string[] = [];
+  private readonly templateScripts: Record<string, string>;
 
   constructor(targetDir: string = process.cwd()) {
     this.targetDir = targetDir;
+    this.templateScripts = this.loadTemplateScripts();
   }
 
   /**
@@ -58,6 +61,8 @@ export class ConfigGenerator {
         }
       }
     }
+
+    this.syncPackageScripts(dryRun);
 
     return {
       filesCreated: this.filesCreated,
@@ -125,6 +130,80 @@ export class ConfigGenerator {
         return this.getEditorconfigTemplate();
       default:
         return null;
+    }
+  }
+
+  private loadTemplateScripts(): Record<string, string> {
+    try {
+      const templatePath = join(
+        dirname(fileURLToPath(import.meta.url)),
+        '..',
+        'package.template.json'
+      );
+      if (!existsSync(templatePath)) {
+        this.warnings.push('package.template.json not found; skipping script sync');
+        return {};
+      }
+      const templateContent = readFileSync(templatePath, 'utf-8');
+      const templateJson = JSON.parse(templateContent) as { scripts?: Record<string, string> };
+      return templateJson.scripts ?? {};
+    } catch (error) {
+      if (error instanceof Error) {
+        this.warnings.push(`Failed to read package template scripts: ${error.message}`);
+      } else {
+        this.warnings.push('Failed to read package template scripts');
+      }
+      return {};
+    }
+  }
+
+  private syncPackageScripts(dryRun: boolean): void {
+    if (Object.keys(this.templateScripts).length === 0) {
+      return;
+    }
+
+    const packageJsonPath = join(this.targetDir, 'package.json');
+    if (!existsSync(packageJsonPath)) {
+      this.warnings.push('package.json not found; skipping script sync');
+      return;
+    }
+
+    try {
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8')) as {
+        scripts?: Record<string, string>;
+      };
+      const scripts = packageJson.scripts ?? {};
+      const missingScripts = Object.entries(this.templateScripts).filter(
+        ([name]) => !scripts[name]
+      );
+
+      if (missingScripts.length === 0) {
+        return;
+      }
+
+      if (dryRun) {
+        this.warnings.push(
+          `Dry-run: would add package scripts ${missingScripts.map(([name]) => name).join(', ')}`
+        );
+        return;
+      }
+
+      packageJson.scripts = { ...scripts };
+      for (const [name, value] of missingScripts) {
+        packageJson.scripts[name] = value;
+      }
+
+      writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, 'utf-8');
+
+      if (!this.filesModified.includes('package.json')) {
+        this.filesModified.push('package.json');
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        this.warnings.push(`Failed to update package.json scripts: ${error.message}`);
+      } else {
+        this.warnings.push('Failed to update package.json scripts');
+      }
     }
   }
 
