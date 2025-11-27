@@ -19,6 +19,8 @@ export enum ConfigGroup {
   Docs = 'docs',
   Release = 'release',
   Security = 'security',
+  Ci = 'ci',
+  Governance = 'governance',
   GitHooks = 'git-hooks',
   Editor = 'editor',
 }
@@ -33,8 +35,8 @@ export enum ConfigFile {
   ESLint = 'eslint',
 
   // Testing
-  Jest = 'jest',
   Vitest = 'vitest',
+  Jest = 'jest',
   Playwright = 'playwright',
 
   // Docs
@@ -49,6 +51,18 @@ export enum ConfigFile {
   // Security
   ESLintSecurity = 'eslint-security',
   Gitleaks = 'gitleaks',
+  SecurityWorkflow = 'security-workflow',
+  Dependabot = 'dependabot',
+  Npmrc = 'npmrc',
+
+  // CI/CD
+  GithubCi = 'github-ci',
+
+  // Governance
+  Codeowners = 'codeowners',
+  PullRequestTemplate = 'pull-request-template',
+  IssueTemplateBug = 'issue-template-bug',
+  IssueTemplateFeature = 'issue-template-feature',
 
   // Git Hooks
   LintStaged = 'lint-staged',
@@ -63,10 +77,23 @@ export enum ConfigFile {
  */
 export const configGroupMap: Record<ConfigGroup, ConfigFile[]> = {
   [ConfigGroup.Core]: [ConfigFile.TypeScript, ConfigFile.Prettier, ConfigFile.ESLint],
-  [ConfigGroup.Testing]: [ConfigFile.Jest, ConfigFile.Vitest, ConfigFile.Playwright],
+  [ConfigGroup.Testing]: [ConfigFile.Vitest, ConfigFile.Playwright],
   [ConfigGroup.Docs]: [ConfigFile.TypeDoc, ConfigFile.Storybook],
   [ConfigGroup.Release]: [ConfigFile.CommitLint, ConfigFile.SemanticRelease, ConfigFile.Changesets],
-  [ConfigGroup.Security]: [ConfigFile.ESLintSecurity, ConfigFile.Gitleaks],
+  [ConfigGroup.Security]: [
+    ConfigFile.ESLintSecurity,
+    ConfigFile.Gitleaks,
+    ConfigFile.SecurityWorkflow,
+    ConfigFile.Dependabot,
+    ConfigFile.Npmrc,
+  ],
+  [ConfigGroup.Ci]: [ConfigFile.GithubCi],
+  [ConfigGroup.Governance]: [
+    ConfigFile.Codeowners,
+    ConfigFile.PullRequestTemplate,
+    ConfigFile.IssueTemplateBug,
+    ConfigFile.IssueTemplateFeature,
+  ],
   [ConfigGroup.GitHooks]: [ConfigFile.LintStaged, ConfigFile.Husky],
   [ConfigGroup.Editor]: [ConfigFile.EditorConfig],
 };
@@ -96,6 +123,8 @@ export interface SetupChoices {
   skipValidation: boolean;
   dryRun: boolean;
   publicPackage: boolean;
+  enableUiConfigs: boolean;
+  useJest: boolean;
 }
 
 /**
@@ -107,6 +136,8 @@ export interface CliOptions {
   dryRun: boolean;
   force: boolean;
   publicPackage: boolean;
+  ui: boolean;
+  jest: boolean;
 }
 
 /**

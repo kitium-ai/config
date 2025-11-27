@@ -17,6 +17,8 @@ export class ConfigPrompter {
   async prompt(): Promise<SetupChoices> {
     const packageType = await this.promptPackageType();
     const configGroups = await this.promptConfigGroups(packageType);
+    const enableUiConfigs = await this.promptUiConfigs(configGroups);
+    const useJest = await this.promptTestRunner(configGroups);
     const overrideExisting = await this.promptOverride();
     const setupGitHooks = await this.promptGitHooks();
     const publicPackage = await this.promptPublic(packageType);
@@ -29,6 +31,8 @@ export class ConfigPrompter {
       skipValidation: false,
       dryRun: false,
       publicPackage,
+      enableUiConfigs,
+      useJest,
     };
   }
 
@@ -100,12 +104,12 @@ export class ConfigPrompter {
           } as any,
           {
             name: ConfigGroup.Testing,
-            message: '🧪 Testing (Jest, Vitest, Playwright)',
+            message: '🧪 Testing (Vitest by default, Playwright optional)',
             enabled: suggested.includes(ConfigGroup.Testing),
           } as any,
           {
             name: ConfigGroup.Docs,
-            message: '📚 Documentation (TypeDoc, Storybook)',
+            message: '📚 Documentation (TypeDoc, Storybook optional)',
             enabled: suggested.includes(ConfigGroup.Docs),
           } as any,
           {
@@ -115,8 +119,18 @@ export class ConfigPrompter {
           } as any,
           {
             name: ConfigGroup.Security,
-            message: '🔒 Security (ESLint Security, Gitleaks)',
-            enabled: false,
+            message: '🔒 Security (ESLint security, gitleaks, audits)',
+            enabled: suggested.includes(ConfigGroup.Security),
+          } as any,
+          {
+            name: ConfigGroup.Ci,
+            message: '🏗️  CI/CD (GitHub Actions workflows)',
+            enabled: suggested.includes(ConfigGroup.Ci),
+          } as any,
+          {
+            name: ConfigGroup.Governance,
+            message: '👥 Governance (CODEOWNERS, PR/issue templates)',
+            enabled: suggested.includes(ConfigGroup.Governance),
           } as any,
           {
             name: ConfigGroup.GitHooks,
@@ -133,6 +147,43 @@ export class ConfigPrompter {
     ]);
 
     return response.groups;
+  }
+
+  private async promptUiConfigs(configGroups: ConfigGroup[]): Promise<boolean> {
+    const needsUiQuestion =
+      configGroups.includes(ConfigGroup.Testing) || configGroups.includes(ConfigGroup.Docs);
+
+    if (!needsUiQuestion) {
+      return false;
+    }
+
+    const response = await enquirer.prompt<{ enableUi: boolean }>({
+      type: 'confirm',
+      name: 'enableUi',
+      message: 'Include UI tooling (Playwright e2e, Storybook docs)?',
+      initial: false,
+    });
+
+    return response.enableUi;
+  }
+
+  private async promptTestRunner(configGroups: ConfigGroup[]): Promise<boolean> {
+    if (!configGroups.includes(ConfigGroup.Testing)) {
+      return false;
+    }
+
+    const response = await enquirer.prompt<{ runner: 'vitest' | 'jest' }>({
+      type: 'select',
+      name: 'runner',
+      message: 'Choose your primary test runner',
+      initial: 0,
+      choices: [
+        { name: 'vitest', message: 'Vitest (recommended and default)' } as any,
+        { name: 'jest', message: 'Jest (opt-in)' } as any,
+      ] as any,
+    });
+
+    return response.runner === 'jest';
   }
 
   /**
@@ -198,35 +249,50 @@ export class ConfigPrompter {
         ConfigGroup.Core,
         ConfigGroup.Testing,
         ConfigGroup.Docs,
+        ConfigGroup.Security,
+        ConfigGroup.Ci,
+        ConfigGroup.Governance,
         ConfigGroup.Editor,
       ],
       [PackageType.App]: [
         ConfigGroup.Core,
         ConfigGroup.Testing,
+        ConfigGroup.Security,
+        ConfigGroup.Ci,
         ConfigGroup.GitHooks,
+        ConfigGroup.Governance,
         ConfigGroup.Editor,
       ],
       [PackageType.NextApp]: [
         ConfigGroup.Core,
         ConfigGroup.Testing,
         ConfigGroup.Docs,
+        ConfigGroup.Security,
+        ConfigGroup.Ci,
         ConfigGroup.GitHooks,
+        ConfigGroup.Governance,
         ConfigGroup.Editor,
       ],
       [PackageType.CliTool]: [
         ConfigGroup.Core,
         ConfigGroup.Testing,
+        ConfigGroup.Security,
+        ConfigGroup.Ci,
         ConfigGroup.GitHooks,
+        ConfigGroup.Governance,
         ConfigGroup.Editor,
       ],
       [PackageType.MonorepoRoot]: [
         ConfigGroup.Core,
         ConfigGroup.Testing,
         ConfigGroup.Release,
+        ConfigGroup.Security,
+        ConfigGroup.Ci,
+        ConfigGroup.Governance,
         ConfigGroup.GitHooks,
         ConfigGroup.Editor,
       ],
-      [PackageType.Unknown]: [ConfigGroup.Core, ConfigGroup.Editor],
+      [PackageType.Unknown]: [ConfigGroup.Core, ConfigGroup.Security, ConfigGroup.Editor],
     };
 
     return suggestions[type] || [ConfigGroup.Core];

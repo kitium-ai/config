@@ -19,6 +19,12 @@ npx kitiumai-config /path/to/repo
 # Non-interactive mode with auto-detection
 npx kitiumai-config --auto
 
+# Opt into UI tooling while in auto mode
+npx kitiumai-config --auto --ui
+
+# Opt into Jest instead of Vitest
+npx kitiumai-config --auto --jest
+
 # Preview changes without applying
 npx kitiumai-config --dry-run
 ```
@@ -49,6 +55,9 @@ kitiumai-config [options] [target-dir]
 - `--auto` - Non-interactive mode with auto-detected defaults
 - `--dry-run` - Preview changes without actually creating/modifying files
 - `--force` - Override existing files without prompting
+- `--public` - Mark the package as public and scaffold governance + publish settings
+- `--ui` - Include UI tooling (Playwright e2e, Storybook docs) when running non-interactively
+- `--jest` - Opt into Jest configs instead of the default Vitest setup
 - `--help, -h` - Show help message
 
 ### Examples
@@ -63,11 +72,20 @@ kitiumai-config /path/to/repo
 # Non-interactive with defaults
 kitiumai-config --auto
 
+# Include UI tooling in auto mode (Playwright + Storybook)
+kitiumai-config --auto --ui
+
 # Preview changes without applying
 kitiumai-config --dry-run
 
 # Force override existing files
 kitiumai-config --force
+
+# Configure a public package with CI + security baselines
+kitiumai-config --auto --force --public
+
+# Use Jest instead of Vitest when scaffolding testing
+kitiumai-config --auto --jest
 ```
 
 ### Configuration Groups
@@ -75,10 +93,12 @@ kitiumai-config --force
 The tool supports the following configuration groups:
 
 - **Core** - TypeScript, ESLint, Prettier
-- **Testing** - Jest, Vitest, Playwright
-- **Docs** - TypeDoc, Storybook
+- **Testing** - Vitest by default (Jest opt-in), Playwright (opt-in via `--ui` or prompt)
+- **Docs** - TypeDoc (Storybook opt-in via `--ui` or prompt)
 - **Release** - CommitLint, Semantic Release, Changesets
-- **Security** - ESLint Security, Gitleaks
+- **Security** - ESLint Security, Gitleaks, Dependabot, npm registry hardening, security workflow
+- **CI** - GitHub Actions workflow for install/lint/test/coverage/build matrix
+- **Governance** - CODEOWNERS, PR template, issue templates
 - **Git Hooks** - Lint-Staged, Husky (requires manual setup)
 - **Editor** - EditorConfig
 
@@ -91,6 +111,16 @@ The tool creates configuration files that extend the base configs from `@kitiuma
 - `eslint.config.js` - Imports `@kitiumai/config/eslint.config.base.js`
 - `vitest.config.ts` - Extends `@kitiumai/config/vitest.config.base.js`
 - And more based on your selections...
+
+When the Security, CI, or Governance groups are selected, the generator also produces:
+
+- `.github/workflows/ci.yml` with lint/test/coverage/build jobs and concurrency guardrails
+- `.github/workflows/security.yml` pairing code scanning with `@kitiumai/scripts`
+- `.github/dependabot.yml` pinned to npm + GitHub Actions ecosystems
+- `.npmrc` registry hardening to prevent accidental publishes to the wrong registry
+- `.github/CODEOWNERS`, `.github/PULL_REQUEST_TEMPLATE.md`, and issue templates for bugs/features
+
+Package manifests are automatically synced with scripts from `package.template.json` and the `@kitiumai/scripts` devDependency so that lint, test, and security automation stay consistent across repos.
 
 ### Notes
 
@@ -119,9 +149,9 @@ The tool creates configuration files that extend the base configs from `@kitiuma
 
 ## Testing
 
-- `@kitiumai/config/jest.config.base.js`: Shared Jest defaults (uses `ts-jest`; install `jest` and `ts-jest` in consumers).
-- `@kitiumai/config/vitest.config.base.js`: Vitest base with Node env and coverage reporters (install `vitest` in consumers).
-- `@kitiumai/config/playwright.config.base.js`: Playwright base with retries, tracing, and multi-browser projects (install `@playwright/test` in consumers).
+- `@kitiumai/config/vitest.config.base.js`: Primary test runner base with Node env and coverage reporters (install `vitest` in consumers).
+- `@kitiumai/config/jest.config.base.js`: Opt-in Jest defaults (uses `ts-jest`; install `jest` and `ts-jest` in consumers).
+- `@kitiumai/config/playwright.config.base.js`: Opt-in UI E2E base with retries, tracing, and multi-browser projects (install `@playwright/test` in consumers).
 
 ## Security & compliance
 
@@ -133,6 +163,43 @@ The tool creates configuration files that extend the base configs from `@kitiuma
 - `@kitiumai/config/package.template.json`: Copy/merge when creating new packages to inherit common metadata (license, engines, publishConfig, scripts, toolchain pins).
 - `@kitiumai/config/packageBase.cjs`: Exported JS object for scaffolding scripts; merge and override per-package fields.
 - Validate existing manifests with `pnpm run validate:package-manifests` (checks for license, engines.node, type, and publishConfig for public scoped packages).
+
+### Node API (for automation)
+
+Use the exported detector, prompter, and generator when you need to embed setup flows into custom tooling or migrations:
+
+```ts
+import {
+  ConfigDetector,
+  ConfigGenerator,
+  ConfigGroup,
+  ConfigPrompter,
+} from '@kitiumai/config';
+
+const detector = new ConfigDetector('/path/to/repo');
+const detection = await detector.detect();
+
+const prompter = new ConfigPrompter(detection);
+const choices = await prompter.prompt();
+
+const generator = new ConfigGenerator('/path/to/repo');
+await generator.generate(
+  {
+    ...choices,
+    configGroups: [ConfigGroup.Core, ConfigGroup.Ci, ConfigGroup.Security],
+    overrideExisting: true,
+    setupGitHooks: detection.hasGit,
+    skipValidation: false,
+    dryRun: false,
+    publicPackage: true,
+    enableUiConfigs: false,
+    useJest: false,
+  },
+  false
+);
+```
+
+The `configGroupMap` export maps each group to its generated files and can be used to build custom prompts or dashboards.
 
 ## Quality gates & git hygiene
 
@@ -149,3 +216,10 @@ The tool creates configuration files that extend the base configs from `@kitiuma
 
 - `@kitiumai/config/semantic-release.config.base.cjs`: Semantic-release pipeline with changelog, npm, git, and GitHub publish steps.
 - `@kitiumai/config/changeset.config.base.json`: Standard Changesets template for new packages/repos (aligns with `main` as release branch).
+
+## Repository structure
+
+- **Root configs**: All base configuration exports live at the repository root for easy consumption via `exports` in `package.json`.
+- **CLI + automation**: The `src/` directory hosts the TypeScript sources for the detector, prompter, and generator used by the `kitiumai-config` CLI.
+- **Templates**: `package.template.json` and `packageBase.cjs` centralize package defaults so scripts and tooling stay synchronized across repos.
+- The current layout keeps configuration artifacts alongside their base presets, so no restructuring is required to extend or consume them.
