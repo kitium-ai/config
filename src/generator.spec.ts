@@ -90,6 +90,8 @@ describe('ConfigGenerator', () => {
         skipValidation: false,
         dryRun: false,
         publicPackage: false,
+        enableUiConfigs: false,
+        useJest: false,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -113,6 +115,8 @@ describe('ConfigGenerator', () => {
         skipValidation: false,
         dryRun: false,
         publicPackage: false,
+        enableUiConfigs: false,
+        useJest: false,
       };
 
       const generator = new ConfigGenerator(tempDir);
