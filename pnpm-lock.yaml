@@ -14,9 +14,6 @@ importers:
       '@eslint/js':
         specifier: ^9.14.0
         version: 9.39.1
-      '@kitiumai/scripts':
-        specifier: ^0.2.1
-        version: 0.2.1
       '@semantic-release/changelog':
         specifier: ^6.0.3
         version: 6.0.3(semantic-release@25.0.2(typescript@5.9.3))
@@ -60,6 +57,9 @@ importers:
       '@changesets/cli':
         specifier: ^2.27.1
         version: 2.29.7(@types/node@24.10.1)
+      '@kitiumai/scripts':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@types/node':
         specifier: ^24.10.1
         version: 24.10.1
@@ -378,8 +378,8 @@ packages:
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
 
-  '@kitiumai/scripts@0.2.1':
-    resolution: {integrity: sha512-7m8jwnZnUodvcQVa0Q+BuVZY3m2LOQ22l2ZEThStMVo8jFbGWIfDVVCAnzANdOUcyG+IDIlTeJiDpBzp6sR6wQ==}
+  '@kitiumai/scripts@1.0.0':
+    resolution: {integrity: sha512-pgvbxPZBvZki0bOwiS3+s0ImzBd2iTIYC0/w3X3jUJwuIjNnTnbds0TWpaAELoRbjC2F2raTupN05zGFGbeAGw==}
     engines: {node: '>=18.0.0', npm: '>=9.0.0'}
     hasBin: true
 
@@ -2984,11 +2984,11 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
-  '@kitiumai/scripts@0.2.1':
+  '@kitiumai/scripts@1.0.0':
     dependencies:
-      chalk: 4.1.2
+      chalk: 5.6.2
       commander: 14.0.2
-      execa: 5.1.1
+      execa: 8.0.1
       fs-extra: 11.3.2
 
   '@manypkg/find-root@1.1.0':

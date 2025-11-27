@@ -11,6 +11,7 @@
 ### Changed
 
 - Vitest is now the default testing configuration, with Jest generated only when explicitly requested.
+- Updated `@kitiumai/scripts` to version 1.0.0 to align config scaffolding with the latest shared tooling release.
 
 ### Documentation
 

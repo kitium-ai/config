@@ -42,14 +42,14 @@ const base = {
     "publish:dry-run:token": "pnpm run publish:setup && pnpm publish --access public --no-git-checks --dry-run --registry https://registry.npmjs.org",
     release: "pnpm version && pnpm install --lockfile-only"
   },
-  devDependencies: {
-    typescript: "^5.3.0",
-    "@kitiumai/scripts": "^0.2.1",
-    eslint: "^8.0.0",
-    prettier: "^3.0.0",
-    vitest: "^1.0.0",
-    "@changesets/cli": "^2.27.1"
-  }
-};
+    devDependencies: {
+      typescript: "^5.3.0",
+      "@kitiumai/scripts": "^1.0.0",
+      eslint: "^8.0.0",
+      prettier: "^3.0.0",
+      vitest: "^2.0.0",
+      "@changesets/cli": "^2.27.1"
+    }
+  };
 
 module.exports = base;
