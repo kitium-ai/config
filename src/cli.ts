@@ -42,12 +42,16 @@ async function main(): Promise<void> {
         dryRun: options.dryRun,
         publicPackage:
           options.publicPackage ?? detection.type === PackageType.Library,
+        enableUiConfigs: options.ui,
+        useJest: options.jest,
       };
     } else {
       const prompter = new ConfigPrompter(detection);
       console.log(chalk.cyan('Please answer the following questions:\n'));
       choices = await prompter.prompt();
       choices.publicPackage = options.publicPackage ?? choices.publicPackage;
+      choices.enableUiConfigs = options.ui || choices.enableUiConfigs;
+      choices.useJest = options.jest || choices.useJest;
     }
 
     // Generate configurations
@@ -83,6 +87,8 @@ function parseCliArgs(args: string[]): CliOptions {
     dryRun: false,
     force: false,
     publicPackage: false,
+    ui: false,
+    jest: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -100,6 +106,10 @@ function parseCliArgs(args: string[]): CliOptions {
       options.force = true;
     } else if (arg === '--public') {
       options.publicPackage = true;
+    } else if (arg === '--ui') {
+      options.ui = true;
+    } else if (arg === '--jest') {
+      options.jest = true;
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
       process.exit(0);
@@ -126,6 +136,8 @@ ${chalk.bold('Options:')}
   --dry-run          Show what would be changed without making changes
   --force            Override existing files without prompting
   --public           Mark package as public (adds publish config, governance files)
+  --ui               Include UI tooling (Playwright e2e, Storybook docs) in auto/force mode
+  --jest             Use Jest configs instead of the default Vitest setup
   --help, -h         Show this help message
 
 ${chalk.bold('Examples:')}

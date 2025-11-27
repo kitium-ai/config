@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.2
+
+### Added
+
+- CI, security, and governance scaffolding surfaced through the CLI (GitHub Actions workflows, Dependabot, npmrc hardening, CODEOWNERS, PR/issue templates).
+- Automatic sync of shared lint/test/security scripts and `@kitiumai/scripts` devDependency into generated `package.json` files to avoid per-repo drift.
+- CLI flags for `--ui` (to gate Playwright/Storybook scaffolding in non-interactive runs) and `--jest` (to opt into Jest instead of the default Vitest setup).
+
+### Changed
+
+- Vitest is now the default testing configuration, with Jest generated only when explicitly requested.
+
+### Documentation
+
+- Expanded README with CLI examples, flags (including `--public`), config group coverage, Node API usage, and repository structure guidance.
+
 ## 0.1.4
 
 ### Added
