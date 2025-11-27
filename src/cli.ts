@@ -6,6 +6,7 @@ import { ConfigDetector } from './detector.js';
 import { ConfigPrompter } from './prompter.js';
 import { ConfigGenerator } from './generator.js';
 import type { CliOptions } from './types.js';
+import { PackageType } from './types.js';
 
 /**
  * Main CLI entry point
@@ -39,11 +40,14 @@ async function main(): Promise<void> {
         setupGitHooks: detection.hasGit,
         skipValidation: false,
         dryRun: options.dryRun,
+        publicPackage:
+          options.publicPackage ?? detection.type === PackageType.Library,
       };
     } else {
       const prompter = new ConfigPrompter(detection);
       console.log(chalk.cyan('Please answer the following questions:\n'));
       choices = await prompter.prompt();
+      choices.publicPackage = options.publicPackage ?? choices.publicPackage;
     }
 
     // Generate configurations
@@ -78,6 +82,7 @@ function parseCliArgs(args: string[]): CliOptions {
     auto: false,
     dryRun: false,
     force: false,
+    publicPackage: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -93,6 +98,8 @@ function parseCliArgs(args: string[]): CliOptions {
       options.dryRun = true;
     } else if (arg === '--force') {
       options.force = true;
+    } else if (arg === '--public') {
+      options.publicPackage = true;
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
       process.exit(0);
@@ -118,6 +125,7 @@ ${chalk.bold('Options:')}
   --auto              Non-interactive mode with defaults
   --dry-run          Show what would be changed without making changes
   --force            Override existing files without prompting
+  --public           Mark package as public (adds publish config, governance files)
   --help, -h         Show this help message
 
 ${chalk.bold('Examples:')}

@@ -19,6 +19,7 @@ export class ConfigPrompter {
     const configGroups = await this.promptConfigGroups(packageType);
     const overrideExisting = await this.promptOverride();
     const setupGitHooks = await this.promptGitHooks();
+    const publicPackage = await this.promptPublic(packageType);
 
     return {
       packageType,
@@ -27,6 +28,7 @@ export class ConfigPrompter {
       setupGitHooks,
       skipValidation: false,
       dryRun: false,
+      publicPackage,
     };
   }
 
@@ -169,6 +171,22 @@ export class ConfigPrompter {
     });
 
     return response.setupHooks;
+  }
+
+  /**
+   * Prompt for public package settings
+   */
+  private async promptPublic(packageType: PackageType): Promise<boolean> {
+    const initial = packageType === PackageType.Library || packageType === PackageType.CliTool;
+
+    const response = await enquirer.prompt<{ isPublic: boolean }>({
+      type: 'confirm',
+      name: 'isPublic',
+      message: 'Is this package intended to be published publicly (npm)?',
+      initial,
+    });
+
+    return response.isPublic;
   }
 
   /**

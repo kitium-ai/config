@@ -24,6 +24,7 @@ describe('ConfigGenerator', () => {
         setupGitHooks: false,
         skipValidation: false,
         dryRun: false,
+        publicPackage: false,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -42,6 +43,7 @@ describe('ConfigGenerator', () => {
         setupGitHooks: false,
         skipValidation: false,
         dryRun: false,
+        publicPackage: false,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -65,6 +67,7 @@ describe('ConfigGenerator', () => {
         setupGitHooks: false,
         skipValidation: false,
         dryRun: false,
+        publicPackage: false,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -87,6 +90,7 @@ describe('ConfigGenerator', () => {
         setupGitHooks: false,
         skipValidation: false,
         dryRun: false,
+        publicPackage: false,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -105,6 +109,7 @@ describe('ConfigGenerator', () => {
         setupGitHooks: false,
         skipValidation: false,
         dryRun: true,
+        publicPackage: false,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -122,6 +127,7 @@ describe('ConfigGenerator', () => {
         setupGitHooks: false,
         skipValidation: false,
         dryRun: false,
+        publicPackage: false,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -140,6 +146,7 @@ describe('ConfigGenerator', () => {
         setupGitHooks: false,
         skipValidation: false,
         dryRun: false,
+        publicPackage: false,
       };
 
       const generator = new ConfigGenerator(tempDir);

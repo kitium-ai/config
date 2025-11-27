@@ -63,6 +63,7 @@ export class ConfigGenerator {
     }
 
     this.syncPackageScripts(dryRun);
+    this.applyPublicPackageConfig(choices, dryRun);
 
     return {
       filesCreated: this.filesCreated,
@@ -204,6 +205,202 @@ export class ConfigGenerator {
       } else {
         this.warnings.push('Failed to update package.json scripts');
       }
+    }
+  }
+
+  /**
+   * Apply public package settings (package.json + governance files)
+   */
+  private applyPublicPackageConfig(choices: SetupChoices, dryRun: boolean): void {
+    if (!choices.publicPackage) {
+      return;
+    }
+
+    this.ensureGovernanceFiles(choices, dryRun);
+
+    const packageJsonPath = join(this.targetDir, 'package.json');
+    if (!existsSync(packageJsonPath)) {
+      this.warnings.push('package.json not found; skipping public package config');
+      return;
+    }
+
+    try {
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8')) as {
+        license?: string;
+        publishConfig?: { access?: string; registry?: string };
+        files?: string[];
+      };
+
+      let changed = false;
+
+      if (!packageJson.license) {
+        packageJson.license = 'MIT';
+        changed = true;
+      }
+
+      const requiredFiles = [
+        'dist/**/*',
+        'README.md',
+        'LICENSE',
+        'CODE_OF_CONDUCT.md',
+        'CONTRIBUTING.md',
+        'CHANGELOG.md',
+      ];
+      const files = packageJson.files ?? [];
+      const missingFiles = requiredFiles.filter((f) => !files.includes(f));
+      if (missingFiles.length > 0) {
+        packageJson.files = [...files, ...missingFiles];
+        changed = true;
+      }
+
+      const publishConfig = packageJson.publishConfig ?? {};
+      if (publishConfig.access !== 'public') {
+        publishConfig.access = 'public';
+        changed = true;
+      }
+      if (!publishConfig.registry) {
+        publishConfig.registry = 'https://registry.npmjs.org/';
+        changed = true;
+      }
+      packageJson.publishConfig = publishConfig;
+
+      if (!changed) {
+        return;
+      }
+
+      if (dryRun) {
+        this.warnings.push('Dry-run: would update package.json for public publish settings');
+        return;
+      }
+
+      writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, 'utf-8');
+      if (!this.filesModified.includes('package.json')) {
+        this.filesModified.push('package.json');
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        this.warnings.push(`Failed to update package.json for public config: ${error.message}`);
+      } else {
+        this.warnings.push('Failed to update package.json for public config');
+      }
+    }
+  }
+
+  private ensureGovernanceFiles(choices: SetupChoices, dryRun: boolean): void {
+    const files = [
+      {
+        name: 'LICENSE',
+        content: `MIT License
+
+Copyright (c) ${new Date().getFullYear()} KitiumAI
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+`,
+      },
+      {
+        name: 'CODE_OF_CONDUCT.md',
+        content: `# Code of Conduct
+
+We follow the Contributor Covenant to ensure a welcoming community.
+
+## Our Pledge
+
+We pledge to make participation in this project a harassment-free experience for everyone.
+
+## Standards
+
+- Be respectful and inclusive.
+- Provide constructive feedback.
+- Assume good intent and collaborate in good faith.
+
+## Unacceptable Behavior
+
+- Harassment or discrimination of any kind.
+- Trolling, insulting/derogatory comments, or personal attacks.
+- Publishing others' private information without permission.
+
+## Reporting
+
+Report unacceptable behavior to the maintainers at conduct@kitium.ai. All reports will be reviewed promptly and confidentially.
+
+## Enforcement
+
+Maintainers may take appropriate action, including warnings or removal from the project spaces.
+
+## Attribution
+
+Adapted from the Contributor Covenant, version 2.1.
+`,
+      },
+      {
+        name: 'CONTRIBUTING.md',
+        content: `# Contributing
+
+Thanks for helping improve this package!
+
+## Getting started
+
+1) Install dependencies: pnpm install
+2) Build: pnpm run build
+3) Type-check: pnpm run typecheck
+4) Tests: pnpm test
+
+## Standards
+
+- Keep TypeScript strict and prefer explicit types.
+- Run lint/format before opening a PR.
+- Add or adjust tests when behavior changes.
+- Update docs/CHANGELOG for user-facing changes.
+`,
+      },
+    ];
+
+    for (const file of files) {
+      this.writeGovernanceFile(file.name, file.content, choices, dryRun);
+    }
+  }
+
+  private writeGovernanceFile(
+    filename: string,
+    content: string,
+    choices: SetupChoices,
+    dryRun: boolean
+  ): void {
+    const filePath = join(this.targetDir, filename);
+    const exists = existsSync(filePath);
+
+    if (exists && !choices.overrideExisting) {
+      this.warnings.push(`Skipped existing ${filename}`);
+      return;
+    }
+
+    if (!dryRun) {
+      this.ensureDir(dirname(filePath));
+      writeFileSync(filePath, content, 'utf-8');
+    }
+
+    if (exists) {
+      if (!this.filesModified.includes(filename)) {
+        this.filesModified.push(filename);
+      }
+    } else {
+      this.filesCreated.push(filename);
     }
   }
 

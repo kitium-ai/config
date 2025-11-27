@@ -95,6 +95,7 @@ export interface SetupChoices {
   setupGitHooks: boolean;
   skipValidation: boolean;
   dryRun: boolean;
+  publicPackage: boolean;
 }
 
 /**
@@ -105,6 +106,7 @@ export interface CliOptions {
   auto: boolean;
   dryRun: boolean;
   force: boolean;
+  publicPackage: boolean;
 }
 
 /**
