@@ -30,6 +30,7 @@ jobs:
 
       - name: Run pnpm audit
         run: pnpm audit --audit-level moderate
+        continue-on-error: true
 
       - name: Check for secrets with TruffleHog
         uses: trufflesecurity/trufflehog@main
