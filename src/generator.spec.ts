@@ -25,6 +25,8 @@ describe('ConfigGenerator', () => {
         skipValidation: false,
         dryRun: false,
         publicPackage: false,
+        enableUiConfigs: false,
+        useJest: false,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -44,15 +46,35 @@ describe('ConfigGenerator', () => {
         skipValidation: false,
         dryRun: false,
         publicPackage: false,
+        enableUiConfigs: false,
+        useJest: false,
       };
 
       const generator = new ConfigGenerator(tempDir);
       await generator.generate(choices, false);
 
-      expect(
-        existsSync(join(tempDir, 'jest.config.cjs')) ||
-          existsSync(join(tempDir, 'vitest.config.ts'))
-      ).toBe(true);
+      expect(existsSync(join(tempDir, 'vitest.config.ts'))).toBe(true);
+      expect(existsSync(join(tempDir, 'jest.config.cjs'))).toBe(false);
+    });
+
+    it('should generate jest config when useJest is true', async () => {
+      const choices: SetupChoices = {
+        packageType: PackageType.Library,
+        configGroups: [ConfigGroup.Testing],
+        overrideExisting: false,
+        setupGitHooks: false,
+        skipValidation: false,
+        dryRun: false,
+        publicPackage: false,
+        enableUiConfigs: false,
+        useJest: true,
+      };
+
+      const generator = new ConfigGenerator(tempDir);
+      await generator.generate(choices, false);
+
+      expect(existsSync(join(tempDir, 'jest.config.cjs'))).toBe(true);
+      expect(existsSync(join(tempDir, 'vitest.config.ts'))).toBe(false);
     });
 
     it('should not override existing files by default', async () => {
@@ -110,6 +132,8 @@ describe('ConfigGenerator', () => {
         skipValidation: false,
         dryRun: true,
         publicPackage: false,
+        enableUiConfigs: false,
+        useJest: false,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -128,6 +152,8 @@ describe('ConfigGenerator', () => {
         skipValidation: false,
         dryRun: false,
         publicPackage: false,
+        enableUiConfigs: false,
+        useJest: false,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -147,12 +173,36 @@ describe('ConfigGenerator', () => {
         skipValidation: false,
         dryRun: false,
         publicPackage: false,
+        enableUiConfigs: false,
+        useJest: false,
       };
 
       const generator = new ConfigGenerator(tempDir);
       const result = await generator.generate(choices, false);
 
       expect(result.filesCreated.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it('should scaffold ci, security, and governance assets', async () => {
+      const choices: SetupChoices = {
+        packageType: PackageType.Library,
+        configGroups: [ConfigGroup.Security, ConfigGroup.Ci, ConfigGroup.Governance],
+        overrideExisting: false,
+        setupGitHooks: false,
+        skipValidation: false,
+        dryRun: false,
+        publicPackage: false,
+        enableUiConfigs: false,
+        useJest: false,
+      };
+
+      const generator = new ConfigGenerator(tempDir);
+      await generator.generate(choices, false);
+
+      expect(existsSync(join(tempDir, '.github/workflows/ci.yml'))).toBe(true);
+      expect(existsSync(join(tempDir, '.github/workflows/security.yml'))).toBe(true);
+      expect(existsSync(join(tempDir, '.github/CODEOWNERS'))).toBe(true);
+      expect(existsSync(join(tempDir, '.npmrc'))).toBe(true);
     });
   });
 });
