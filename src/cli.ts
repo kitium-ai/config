@@ -5,8 +5,7 @@ import chalk from 'chalk';
 import { ConfigDetector } from './detector.js';
 import { ConfigPrompter } from './prompter.js';
 import { ConfigGenerator } from './generator.js';
-import type { CliOptions } from './types.js';
-import { PackageType } from './types.js';
+import { PackageType, type CliOptions } from './types.js';
 
 /**
  * Main CLI entry point
@@ -40,8 +39,7 @@ async function main(): Promise<void> {
         setupGitHooks: detection.hasGit,
         skipValidation: false,
         dryRun: options.dryRun,
-        publicPackage:
-          options.publicPackage ?? detection.type === PackageType.Library,
+        publicPackage: options.publicPackage ?? detection.type === PackageType.Library,
         enableUiConfigs: options.ui,
         useJest: options.jest,
       };

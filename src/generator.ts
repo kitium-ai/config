@@ -24,7 +24,10 @@ export class ConfigGenerator {
   constructor(targetDir: string = process.cwd()) {
     this.targetDir = targetDir;
     this.templateScripts = this.loadTemplateScripts();
-    this.scriptsPackageVersion = this.loadScriptsPackageVersion();
+    const version = this.loadScriptsPackageVersion();
+    if (version !== undefined) {
+      this.scriptsPackageVersion = version;
+    }
   }
 
   /**
@@ -290,6 +293,7 @@ export class ConfigGenerator {
 
       packageJson.devDependencies = {
         ...devDependencies,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         '@kitiumai/scripts': this.scriptsPackageVersion,
       };
 
@@ -669,7 +673,8 @@ module.exports = {
   }
 
   private getSecurityWorkflowTemplate(): ConfigTemplate {
-    const content = `name: Security\n\n` +
+    const content =
+      `name: Security\n\n` +
       `on:\n` +
       `  schedule:\n` +
       `    - cron: '0 6 * * 1'\n` +
@@ -729,7 +734,8 @@ module.exports = {
   }
 
   private getDependabotTemplate(): ConfigTemplate {
-    const content = `version: 2\n` +
+    const content =
+      `version: 2\n` +
       `updates:\n` +
       `  - package-ecosystem: "npm"\n` +
       `    directory: "/"\n` +
@@ -745,7 +751,8 @@ module.exports = {
   }
 
   private getNpmrcTemplate(): ConfigTemplate {
-    const content = `registry=https://registry.npmjs.org/\n` +
+    const content =
+      `registry=https://registry.npmjs.org/\n` +
       `engine-strict=true\n` +
       `strict-ssl=true\n` +
       `save-exact=false\n`;
@@ -757,7 +764,8 @@ module.exports = {
   }
 
   private getGithubCiTemplate(): ConfigTemplate {
-    const content = `name: CI\n\n` +
+    const content =
+      `name: CI\n\n` +
       `on:\n` +
       `  push:\n` +
       `    branches: [main, master]\n` +
@@ -799,7 +807,8 @@ module.exports = {
   }
 
   private getCodeownersTemplate(): ConfigTemplate {
-    const content = `# Default ownership rules\n` +
+    const content =
+      `# Default ownership rules\n` +
       `* @kitium-ai/maintainers\n` +
       `.github/ @kitium-ai/security\n`;
 
@@ -810,7 +819,8 @@ module.exports = {
   }
 
   private getPullRequestTemplate(): ConfigTemplate {
-    const content = `## Summary\n` +
+    const content =
+      `## Summary\n` +
       `- [ ] Ready for review\n` +
       `- [ ] Includes tests\n` +
       `- [ ] Documentation updated\n\n` +
@@ -828,7 +838,8 @@ module.exports = {
   }
 
   private getIssueTemplateBug(): ConfigTemplate {
-    const content = `---\n` +
+    const content =
+      `---\n` +
       `name: "Bug report"\n` +
       `about: Report a bug or regression\n` +
       `title: "[Bug] "\n` +
@@ -849,7 +860,8 @@ module.exports = {
   }
 
   private getIssueTemplateFeature(): ConfigTemplate {
-    const content = `---\n` +
+    const content =
+      `---\n` +
       `name: "Feature request"\n` +
       `about: Suggest a new feature or improvement\n` +
       `title: "[Feature] "\n` +
