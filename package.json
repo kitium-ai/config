@@ -1,9 +1,10 @@
 {
   "name": "@kitiumai/config",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": false,
   "description": "Shared configuration presets (TypeScript, formatting, and tooling) for the KitiumAI monorepo.",
   "type": "module",
+  "sideEffects": false,
   "bin": {
     "kitiumai-config": "./dist/cli.js"
   },
@@ -137,7 +138,7 @@
     "typescript-eslint": "^8.0.0"
   },
   "devDependencies": {
-    "@kitiumai/scripts": "^1.0.0",
+    "@kitiumai/scripts": "workspace:*",
     "@changesets/cli": "^2.27.1",
     "@types/node": "^24.10.1",
     "@vitest/ui": "^1.0.0",

@@ -2,6 +2,12 @@
 
 ## 2.0.0
 
+### Changed
+
+- Added sideEffect false in package.json
+
+## 2.0.0
+
 ### Added
 
 - CI, security, and governance scaffolding surfaced through the CLI (GitHub Actions workflows, Dependabot, npmrc hardening, CODEOWNERS, PR/issue templates).
