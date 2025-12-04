@@ -138,6 +138,10 @@ export interface DetectionResult {
 export interface SetupChoices {
   packageType: PackageType;
   configGroups: ConfigGroup[];
+  /** Optional: Specific config files to include/exclude (granular control) */
+  selectedConfigFiles?: ConfigFile[];
+  /** Selection mode: 'group' (select by groups) or 'granular' (select individual files) */
+  selectionMode?: 'group' | 'granular';
   overrideExisting: boolean;
   setupGitHooks: boolean;
   skipValidation: boolean;
@@ -158,6 +162,8 @@ export interface CliOptions {
   publicPackage: boolean;
   ui: boolean;
   testFramework: TestFramework;
+  /** Enable granular file selection mode */
+  granular?: boolean;
 }
 
 /**

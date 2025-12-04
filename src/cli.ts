@@ -5,7 +5,9 @@ import chalk from 'chalk';
 import { PackageType, type CliOptions, ConfigGroup, TestFramework } from './types.js';
 import { ConfigDetector } from './detector.js';
 import { ConfigPrompter } from './prompter.js';
+import { ConfigPrompterRefactored } from './prompter-refactored.js';
 import { ConfigGenerator } from './generator.js';
+import { ConfigGeneratorRefactored } from './generator-refactored.js';
 import {
   scanSecrets,
   auditDependencies,
@@ -114,6 +116,7 @@ async function runSetup(args: string[]): Promise<void> {
     choices = {
       packageType: detection.type,
       configGroups: [ConfigGroup.Core, ConfigGroup.Testing, ConfigGroup.Ci], // Core (lint/prettier), Testing (vitest only), CI (pipelines)
+      selectionMode: 'group' as const,
       overrideExisting: options.force,
       setupGitHooks: detection.hasGit,
       skipValidation: false,
@@ -123,9 +126,20 @@ async function runSetup(args: string[]): Promise<void> {
       testFramework: options.testFramework, // Use specified test framework, defaults to Vitest
     };
   } else {
-    const prompter = new ConfigPrompter(detection);
-    console.log(chalk.cyan('Please answer the following questions:\n'));
-    choices = await prompter.prompt();
+    // Use refactored prompter with granular control support
+    const useRefactored = process.env['USE_REFACTORED'] !== 'false';
+
+    if (useRefactored) {
+      const prompter = new ConfigPrompterRefactored(detection);
+      console.log(chalk.cyan('Please answer the following questions:\n'));
+      choices = await prompter.prompt(options.granular);
+    } else {
+      const prompter = new ConfigPrompter(detection);
+      console.log(chalk.cyan('Please answer the following questions:\n'));
+      choices = await prompter.prompt();
+      choices.selectionMode = 'group';
+    }
+
     choices.publicPackage = options.publicPackage ?? choices.publicPackage;
     choices.enableUiConfigs = options.ui || choices.enableUiConfigs;
     choices.testFramework = options.testFramework; // Override with CLI option if specified
@@ -133,8 +147,10 @@ async function runSetup(args: string[]): Promise<void> {
 
   // Generate configurations
   console.log(chalk.dim('\nGenerating configuration files...'));
-  const generator = new ConfigGenerator(options.targetDir);
-  const generateResult = await generator.generate(choices, options.dryRun);
+  const useRefactored = process.env['USE_REFACTORED'] !== 'false';
+  const generateResult = useRefactored
+    ? await new ConfigGeneratorRefactored(options.targetDir).generate(choices, options.dryRun)
+    : await new ConfigGenerator(options.targetDir).generate(choices, options.dryRun);
 
   // Print results
   printResults(generateResult, choices, options.dryRun);
@@ -512,6 +528,7 @@ function parseCliArgs(args: string[]): CliOptions {
     publicPackage: false,
     ui: false,
     testFramework: TestFramework.Vitest, // Default to Vitest
+    granular: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -531,6 +548,8 @@ function parseCliArgs(args: string[]): CliOptions {
       options.publicPackage = true;
     } else if (arg === '--ui') {
       options.ui = true;
+    } else if (arg === '--granular') {
+      options.granular = true;
     } else if (arg === '--jest') {
       options.testFramework = TestFramework.Jest;
     } else if (arg === '--vitest') {
@@ -581,6 +600,7 @@ ${chalk.bold('Setup Options:')}
   --force            Override existing files without prompting
   --public           Mark package as public (adds publish config, governance files)
   --ui               Include UI tooling (Playwright e2e, Storybook docs) in auto/force mode
+  --granular         Enable granular file selection mode (choose individual config files)
   --vitest           Use Vitest for testing (default)
   --jest             Use Jest for testing
   --mocha            Use Mocha for testing

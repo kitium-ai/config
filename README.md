@@ -58,7 +58,13 @@ kitiumai-config [options] [target-dir]
 - `--force` - Override existing files without prompting
 - `--public` - Mark the package as public and scaffold governance + publish settings
 - `--ui` - Include UI tooling (Playwright e2e, Storybook docs) when running non-interactively
+- `--granular` - **NEW!** Enable granular file selection mode (choose individual config files instead of groups)
 - `--jest` - Opt into Jest configs instead of the default Vitest setup
+- `--vitest` - Use Vitest for testing (default)
+- `--mocha` - Use Mocha for testing
+- `--jasmine` - Use Jasmine for testing
+- `--ava` - Use AVA for testing
+- `--tape` - Use Tape for testing
 - `--help, -h` - Show help message
 
 ### Examples
@@ -87,7 +93,56 @@ kitiumai-config --auto --force --public
 
 # Use Jest instead of Vitest when scaffolding testing
 kitiumai-config --auto --jest
+
+# Enable granular file selection (choose individual configs)
+kitiumai-config --granular
 ```
+
+## NEW: Granular File Selection
+
+The CLI now supports **granular file selection mode**, giving you fine-grained control over which config files to generate. This is perfect for:
+
+- **Selective configuration**: Only add the exact configs you need
+- **Incremental adoption**: Add configs one at a time to existing projects
+- **Advanced users**: Full control over your configuration stack
+
+### How to Use Granular Mode
+
+**Interactive Mode:**
+```bash
+kitiumai-config --granular
+```
+
+You'll be prompted to:
+1. Choose between **Group Mode** (quick) or **Granular Mode** (advanced)
+2. Select individual config files organized by category
+3. See descriptions and recommendations for each file
+
+**Example Interactive Flow:**
+```
+How would you like to select configurations?
+  📦 By Groups (Quick - recommended for most users)
+❯ 🎯 Individual Files (Advanced - granular control)
+
+🎯 Core Configs:
+  ✓ TypeScript Config - tsconfig.json with strict mode
+  ✓ Prettier Config - Code formatting
+  ✓ ESLint Config - Linting rules
+
+🧪 Testing Configs:
+  ✓ Vitest Config - Modern, fast test runner (recommended)
+  ☐ Jest Config - Popular test framework
+  ☐ Playwright E2E - End-to-end testing
+
+... and more categories
+```
+
+### Benefits of Granular Mode
+
+- **No repeated code**: Configs are managed through a centralized registry system
+- **Smart dependencies**: Automatically includes required dependencies
+- **Conflict detection**: Warns about incompatible config combinations
+- **Better UX**: Organized by category with helpful descriptions
 
 ### Configuration Groups
 
@@ -219,3 +274,119 @@ The `configGroupMap` export maps each group to its generated files and can be us
 - **CLI + automation**: The `src/` directory hosts the TypeScript sources for the detector, prompter, and generator used by the `kitiumai-config` CLI.
 - **Templates**: `package.template.json` and `packageBase.cjs` centralize package defaults so scripts and tooling stay synchronized across repos.
 - The current layout keeps configuration artifacts alongside their base presets, so no restructuring is required to extend or consume them.
+
+## Architecture Improvements
+
+The CLI has been significantly refactored to improve code quality and maintainability:
+
+### 1. Config Registry System (`config-registry.ts`)
+
+**Problem Solved**: Eliminated 23+ repeated template methods and a massive switch statement.
+
+**Solution**: Centralized configuration metadata in a declarative registry:
+
+```ts
+export const CONFIG_REGISTRY: ConfigMetadata[] = [
+  {
+    id: ConfigFile.TypeScript,
+    displayName: 'TypeScript Config',
+    description: 'tsconfig.json with strict mode',
+    group: ConfigGroup.Core,
+    filePath: 'tsconfig.json',
+    template: '...',
+    defaultEnabled: true,
+    priority: 100,
+  },
+  // ... all configs defined declaratively
+];
+```
+
+**Benefits**:
+- **DRY (Don't Repeat Yourself)**: Single source of truth for all configs
+- **Easy to extend**: Add new configs by adding metadata entries
+- **Type-safe**: Full TypeScript support with interfaces
+- **Maintainable**: No more scattered template methods
+
+### 2. File Operations Utility (`file-operations.ts`)
+
+**Problem Solved**: Duplicated file I/O logic across multiple functions.
+
+**Solution**: Centralized file operations utility class:
+
+```ts
+const fileOps = new FileOperations(targetDir);
+
+// Smart file writing with conflict handling
+const result = fileOps.writeFile(path, content, {
+  overrideExisting: true,
+  dryRun: false
+});
+
+// Intelligent package.json merging
+fileOps.updatePackageJson({ scripts: newScripts }, options);
+```
+
+**Benefits**:
+- **Reusable**: Common operations extracted once
+- **Consistent**: Same behavior across all file operations
+- **Safer**: Built-in checks for file existence and conflicts
+
+### 3. Refactored Generator (`generator-refactored.ts`)
+
+**Problem Solved**: 1292-line file with massive code duplication.
+
+**Solution**: Clean, registry-driven generator:
+
+- **Before**: 23+ template methods, 200+ lines switch statement
+- **After**: Registry lookup + template resolution (~400 lines)
+
+**Key Improvements**:
+- Uses `CONFIG_REGISTRY` for all templates
+- Supports both group-based and granular selection
+- Cleaner separation of concerns
+- Better error handling and warnings
+
+### 4. Enhanced Prompter (`prompter-refactored.ts`)
+
+**Problem Solved**: No way to select individual config files.
+
+**Solution**: Two-mode prompter with granular support:
+
+```ts
+// Mode selection
+const mode = await promptSelectionMode(); // 'group' or 'granular'
+
+// Granular selection with organized categories
+const files = await promptGranularFileSelection(packageType);
+```
+
+**Benefits**:
+- **Flexible**: Supports both quick (group) and precise (granular) modes
+- **Organized**: Configs grouped by category with descriptions
+- **Smart defaults**: Recommends configs based on project type
+- **Backward compatible**: Group mode works exactly as before
+
+### Code Quality Metrics
+
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| Template methods | 23+ | 0 (registry-based) | ✅ 100% reduction |
+| Switch statement lines | 200+ | ~20 | ✅ 90% reduction |
+| Code duplication | High | Minimal | ✅ Significant |
+| Maintainability | Medium | High | ✅ Much easier |
+| User control | Group-only | Group + Granular | ✅ Enhanced |
+
+### Backward Compatibility
+
+All improvements maintain **100% backward compatibility**:
+
+- Existing CLI commands work unchanged
+- Group-based selection is the default
+- Original generator available via environment variable
+- No breaking changes to API or behavior
+
+### Environment Variables
+
+- `USE_REFACTORED=false` - Use original implementation (default: true)
+
+This allows gradual rollout and easy rollback if needed.
