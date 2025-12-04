@@ -112,10 +112,22 @@ async function runSetup(args: string[]): Promise<void> {
   let choices;
   if (options.auto || options.force) {
     console.log(chalk.yellow('Using auto/force mode (non-interactive)\n'));
-    // Auto mode: only setup lint, prettier, vitest, and pipelines
+    // Auto mode: setup core configs, testing, CI, git, and git hooks
+    const autoGroups = [
+      ConfigGroup.Core,     // TypeScript, ESLint, Prettier
+      ConfigGroup.Testing,  // Vitest (or selected test framework)
+      ConfigGroup.Ci,       // GitHub Actions workflows
+    ];
+
+    // Add Git and GitHooks if in a git repository
+    if (detection.hasGit) {
+      autoGroups.push(ConfigGroup.Git);      // .gitignore
+      autoGroups.push(ConfigGroup.GitHooks); // Husky, lint-staged
+    }
+
     choices = {
       packageType: detection.type,
-      configGroups: [ConfigGroup.Core, ConfigGroup.Testing, ConfigGroup.Ci], // Core (lint/prettier), Testing (vitest only), CI (pipelines)
+      configGroups: autoGroups,
       selectionMode: 'group' as const,
       overrideExisting: options.force,
       setupGitHooks: detection.hasGit,

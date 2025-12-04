@@ -562,12 +562,96 @@ labels: enhancement
     displayName: 'Husky Git Hooks',
     description: 'Git hooks management',
     group: ConfigGroup.GitHooks,
-    filePath: '.husky',
+    filePath: '.husky/pre-commit',
     defaultEnabled: true,
     priority: 90,
     condition: (ctx) => ctx.hasGit,
     dependencies: [ConfigFile.LintStaged],
-    template: '', // Husky setup is handled separately
+    template: `#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+pnpm exec lint-staged\n`,
+  },
+
+  // ===== GIT GROUP =====
+  {
+    id: ConfigFile.Gitignore,
+    displayName: '.gitignore',
+    description: 'Git ignore rules for Node.js projects',
+    group: ConfigGroup.Git,
+    filePath: '.gitignore',
+    defaultEnabled: true,
+    priority: 100,
+    condition: (ctx) => ctx.hasGit,
+    template: `# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# Build outputs
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Misc
+.DS_Store
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+
+# Cache
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist/
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+
+# Logs
+logs/
+
+# Storybook
+storybook-static/
+
+# TypeScript
+*.tsbuildinfo
+.tsbuildinfo
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/\n`,
   },
 ];
 

@@ -174,6 +174,7 @@ export class ConfigPrompterRefactored {
       ConfigGroup.Security,
       ConfigGroup.Ci,
       ConfigGroup.Governance,
+      ConfigGroup.Git,
       ConfigGroup.GitHooks,
       ConfigGroup.Editor,
     ];
@@ -202,6 +203,7 @@ export class ConfigPrompterRefactored {
       [ConfigGroup.Governance]: '👥 Governance Configs',
       [ConfigGroup.GitHooks]: '🪝 Git Hooks',
       [ConfigGroup.Editor]: '✏️ Editor Configs',
+      [ConfigGroup.Git]: '📂 Git Configs',
     };
     return names[group] || group;
   }

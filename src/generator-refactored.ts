@@ -12,6 +12,7 @@ import {
   type ConfigMetadata,
 } from './config-registry.js';
 import { FileOperations, type FileOperationResult, type PackageJson } from './file-operations.js';
+import { setupHusky } from './husky-setup.js';
 
 /**
  * Generation result
@@ -64,6 +65,9 @@ export class ConfigGeneratorRefactored {
     this.syncPackageScripts(dryRun);
     this.syncToolkitDependencies(dryRun);
     this.applyPublicPackageConfig(choices, dryRun);
+
+    // Setup Husky if git hooks are enabled
+    await this.setupHuskyIfNeeded(configFilesToGenerate, dryRun);
 
     return {
       filesCreated: this.filesCreated,
@@ -553,5 +557,32 @@ Thanks for helping improve this package!
    */
   getWarnings(): string[] {
     return this.warnings;
+  }
+
+  /**
+   * Setup Husky if it was included in the generated configs
+   */
+  private async setupHuskyIfNeeded(
+    configFiles: ConfigMetadata[],
+    dryRun: boolean
+  ): Promise<void> {
+    const hasHusky = configFiles.some((config) => config.id === ConfigFile.Husky);
+    if (!hasHusky) {
+      return;
+    }
+
+    const result = await setupHusky(this.targetDir, dryRun);
+
+    // Add created files to our tracking
+    for (const file of result.filesCreated) {
+      if (!this.filesCreated.includes(file)) {
+        this.filesCreated.push(file);
+      }
+    }
+
+    // Add warnings
+    for (const warning of result.warnings) {
+      this.warnings.push(warning);
+    }
   }
 }

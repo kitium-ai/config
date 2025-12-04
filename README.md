@@ -36,6 +36,8 @@ The CLI tool will:
 - ❓ Prompt you for configuration choices
 - 📝 Generate all necessary config files
 - ⚠️ Warn about existing files (with option to override)
+- 📂 **NEW!** Auto-generate .gitignore with sensible defaults
+- 🪝 **NEW!** Automatically setup and configure Husky git hooks
 
 ## CLI Tool
 
@@ -155,7 +157,8 @@ The tool supports the following configuration groups:
 - **Security** - ESLint Security, Gitleaks, Dependabot, npm registry hardening, security workflow
 - **CI** - GitHub Actions workflow for install/lint/test/coverage/build matrix
 - **Governance** - CODEOWNERS, PR template, issue templates
-- **Git Hooks** - Lint-Staged, Husky (requires manual setup)
+- **Git** - **NEW!** .gitignore with comprehensive Node.js defaults (included in `--auto` mode)
+- **Git Hooks** - **NEW!** Lint-Staged, Husky with automated setup and installation (included in `--auto` mode)
 - **Editor** - EditorConfig
 
 ### What Gets Generated
@@ -178,10 +181,38 @@ When the Security, CI, or Governance groups are selected, the generator also pro
 
 Package manifests are automatically synced with scripts from `package.template.json` and the `@kitiumai/scripts` devDependency so that lint, test, and security automation stay consistent across repos.
 
+## Automated Git Setup
+
+The CLI now includes **automated Git configuration** in `--auto` mode:
+
+### .gitignore Generation
+- **Comprehensive defaults** for Node.js projects
+- Covers: dependencies, build outputs, test coverage, environment files, IDE files, OS files
+- Includes: TypeScript build info, cache directories, logs, and temporary files
+- **Auto-included** in `--auto` mode for git repositories
+
+### Husky Automated Setup
+- **Automatic installation**: CLI will install husky package if not present
+- **Hook configuration**: Creates `.husky/pre-commit` hook with lint-staged integration
+- **Git config**: Automatically sets `core.hooksPath` to `.husky`
+- **Cross-platform**: Works on Windows, macOS, and Linux
+- **Zero manual steps**: No need to run `npx husky install` or configure manually
+
+**What gets created:**
+```
+.husky/
+├── _/
+│   └── husky.sh          # Helper script (auto-generated)
+└── pre-commit            # Pre-commit hook running lint-staged
+.gitignore                # Comprehensive Node.js gitignore
+lint-staged.config.cjs    # Lint-staged configuration
+```
+
 ### Notes
 
 - The tool respects existing files by default (won't overwrite unless `--force` is used)
-- Git hooks (Husky) setup requires manual installation: `pnpm add -D husky && npx husky install`
+- **Husky is now automatically setup** - no manual installation required!
+- Package manager auto-detected (pnpm, yarn, or npm)
 - Make sure `@kitiumai/config` is installed as a dependency before running the tool
 
 ## TypeScript

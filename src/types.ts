@@ -23,6 +23,7 @@ export enum ConfigGroup {
   Governance = 'governance',
   GitHooks = 'git-hooks',
   Editor = 'editor',
+  Git = 'git',
 }
 
 /**
@@ -76,6 +77,9 @@ export enum ConfigFile {
 
   // Editor
   EditorConfig = 'editorconfig',
+
+  // Git
+  Gitignore = 'gitignore',
 }
 
 /**
@@ -102,6 +106,7 @@ export const configGroupMap: Record<ConfigGroup, ConfigFile[]> = {
   ],
   [ConfigGroup.GitHooks]: [ConfigFile.LintStaged, ConfigFile.Husky],
   [ConfigGroup.Editor]: [ConfigFile.EditorConfig],
+  [ConfigGroup.Git]: [ConfigFile.Gitignore],
 };
 
 /**
