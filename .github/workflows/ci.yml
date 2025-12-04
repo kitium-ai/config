@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Verify shared configs
+        run: >
+          pnpm exec node --input-type=module -e "import { ensureSharedConfigs } from '@kitiumai/scripts/dx';
+            const results = await ensureSharedConfigs({ requireTsconfig: true, requireEslint: true });
+            const issues = results.flatMap((entry) => entry.issues || []);
+            if (issues.length) { console.error(issues.join('\n')); process.exit(1); }
+            console.log('Shared configs verified');"
+      - name: Lint (via @kitiumai/scripts)
+        run: pnpm exec node --input-type=module -e "import { lintAll } from '@kitiumai/scripts/lint'; await lintAll(false);"
+      - name: Tests with coverage
+        run: pnpm exec node --input-type=module -e "import { runTestsCoverage } from '@kitiumai/scripts/test'; await runTestsCoverage();"
+      - name: Type check
+        run: pnpm exec tsc -b --noEmit

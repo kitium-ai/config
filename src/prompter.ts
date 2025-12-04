@@ -1,5 +1,6 @@
 import enquirer from 'enquirer';
-import { ConfigGroup, DetectionResult, PackageType, SetupChoices } from './types.js';
+import chalk from 'chalk';
+import { ConfigGroup, DetectionResult, PackageType, SetupChoices, TestFramework } from './types.js';
 
 /**
  * Interactive prompter for setup choices
@@ -18,7 +19,7 @@ export class ConfigPrompter {
     const packageType = await this.promptPackageType();
     const configGroups = await this.promptConfigGroups(packageType);
     const enableUiConfigs = await this.promptUiConfigs(configGroups);
-    const useJest = await this.promptTestRunner(configGroups);
+    const testFramework = await this.promptTestRunner(configGroups);
     const overrideExisting = await this.promptOverride();
     const setupGitHooks = await this.promptGitHooks();
     const publicPackage = await this.promptPublic(packageType);
@@ -32,7 +33,7 @@ export class ConfigPrompter {
       dryRun: false,
       publicPackage,
       enableUiConfigs,
-      useJest,
+      testFramework,
     };
   }
 
@@ -167,23 +168,97 @@ export class ConfigPrompter {
     return response.enableUi;
   }
 
-  private async promptTestRunner(configGroups: ConfigGroup[]): Promise<boolean> {
+  private async promptTestRunner(configGroups: ConfigGroup[]): Promise<TestFramework> {
     if (!configGroups.includes(ConfigGroup.Testing)) {
-      return false;
+      return TestFramework.None;
     }
 
-    const response = await enquirer.prompt<{ runner: 'vitest' | 'jest' }>({
+    const detectedFrameworks = this.detection.detectedTestFrameworks;
+    const existingFrameworks = detectedFrameworks.filter(f => f !== TestFramework.None);
+
+    // If only one framework detected, use it
+    if (existingFrameworks.length === 1) {
+      console.log(chalk.dim(`✓ Detected existing ${existingFrameworks[0]} setup`));
+      return existingFrameworks[0]!;
+    }
+
+    // If multiple frameworks detected, let user choose
+    if (existingFrameworks.length > 1) {
+      console.log(chalk.yellow(`⚠️  Multiple test frameworks detected: ${existingFrameworks.join(', ')}`));
+      console.log(chalk.dim('You can choose to keep one or migrate to another.'));
+    }
+
+    // Build choices based on detected frameworks and recommendations
+    const choices = this.buildTestFrameworkChoices(detectedFrameworks);
+
+    const response = await enquirer.prompt<{ runner: string }>({
       type: 'select',
       name: 'runner',
-      message: 'Choose your primary test runner',
-      initial: 0,
-      choices: [
-        { name: 'vitest', message: 'Vitest (recommended and default)' } as any,
-        { name: 'jest', message: 'Jest (opt-in)' } as any,
-      ] as any,
+      message: existingFrameworks.length > 0
+        ? 'Choose your primary test runner (existing frameworks detected)'
+        : 'Choose your test runner',
+      initial: this.getRecommendedTestRunnerIndex(detectedFrameworks, choices),
+      choices: choices as any,
     });
 
-    return response.runner === 'jest';
+    return response.runner as TestFramework;
+  }
+
+  /**
+   * Build test framework choices based on detection
+   */
+  private buildTestFrameworkChoices(detectedFrameworks: TestFramework[]): Array<{ name: TestFramework; message: string }> {
+    const choices: Array<{ name: TestFramework; message: string }> = [];
+
+    // Always include Vitest as primary recommendation
+    choices.push({
+      name: TestFramework.Vitest,
+      message: detectedFrameworks.includes(TestFramework.Vitest)
+        ? 'Vitest (detected, recommended)'
+        : 'Vitest (modern, fast, recommended)'
+    });
+
+    // Include Jest if detected or as alternative
+    choices.push({
+      name: TestFramework.Jest,
+      message: detectedFrameworks.includes(TestFramework.Jest)
+        ? 'Jest (detected, mature)'
+        : 'Jest (mature, feature-rich)'
+    });
+
+    // Add other detected frameworks
+    if (detectedFrameworks.includes(TestFramework.Mocha)) {
+      choices.push({ name: TestFramework.Mocha, message: 'Mocha (detected, flexible)' });
+    }
+    if (detectedFrameworks.includes(TestFramework.Jasmine)) {
+      choices.push({ name: TestFramework.Jasmine, message: 'Jasmine (detected, BDD)' });
+    }
+    if (detectedFrameworks.includes(TestFramework.Ava)) {
+      choices.push({ name: TestFramework.Ava, message: 'AVA (detected, concurrent)' });
+    }
+    if (detectedFrameworks.includes(TestFramework.Tape)) {
+      choices.push({ name: TestFramework.Tape, message: 'Tape (detected, minimal)' });
+    }
+
+    return choices;
+  }
+
+  /**
+   * Get recommended test runner index based on detection
+   */
+  private getRecommendedTestRunnerIndex(detectedFrameworks: TestFramework[], choices: Array<{ name: TestFramework; message: string }>): number {
+    // Prefer existing Vitest setup
+    if (detectedFrameworks.includes(TestFramework.Vitest)) {
+      return choices.findIndex(c => c.name === TestFramework.Vitest);
+    }
+
+    // Prefer existing Jest setup
+    if (detectedFrameworks.includes(TestFramework.Jest)) {
+      return choices.findIndex(c => c.name === TestFramework.Jest);
+    }
+
+    // Default to Vitest (first choice)
+    return 0;
   }
 
   /**

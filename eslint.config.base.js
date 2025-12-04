@@ -1,7 +1,7 @@
 /**
  * Base ESLint configuration for KitiumAI monorepo
  * Compatible with ESLint 9+ flat config format
- * 
+ *
  * Note: This config requires the following packages to be installed:
  * - eslint (^9.0.0)
  * - @eslint/js
@@ -111,4 +111,3 @@ export default [
     ignores: ['dist', 'build', 'node_modules', '.turbo', '.next'],
   },
 ];
-

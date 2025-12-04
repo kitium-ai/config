@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync, existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { ConfigGenerator } from './generator.js';
-import { ConfigGroup, PackageType, SetupChoices } from './types.js';
+import { ConfigGroup, PackageType, SetupChoices, TestFramework } from './types.js';
 
 describe('ConfigGenerator', () => {
   let tempDir: string;
@@ -26,7 +26,7 @@ describe('ConfigGenerator', () => {
         dryRun: false,
         publicPackage: false,
         enableUiConfigs: false,
-        useJest: false,
+        testFramework: TestFramework.None,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -47,7 +47,7 @@ describe('ConfigGenerator', () => {
         dryRun: false,
         publicPackage: false,
         enableUiConfigs: false,
-        useJest: false,
+        testFramework: TestFramework.Vitest,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -67,7 +67,7 @@ describe('ConfigGenerator', () => {
         dryRun: false,
         publicPackage: false,
         enableUiConfigs: false,
-        useJest: true,
+        testFramework: TestFramework.Jest,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -91,7 +91,7 @@ describe('ConfigGenerator', () => {
         dryRun: false,
         publicPackage: false,
         enableUiConfigs: false,
-        useJest: false,
+        testFramework: TestFramework.None,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -116,7 +116,7 @@ describe('ConfigGenerator', () => {
         dryRun: false,
         publicPackage: false,
         enableUiConfigs: false,
-        useJest: false,
+        testFramework: TestFramework.None,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -137,7 +137,7 @@ describe('ConfigGenerator', () => {
         dryRun: true,
         publicPackage: false,
         enableUiConfigs: false,
-        useJest: false,
+        testFramework: TestFramework.None,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -147,25 +147,25 @@ describe('ConfigGenerator', () => {
       expect(existsSync(join(tempDir, 'tsconfig.json'))).toBe(false);
     });
 
-    it('should generate editor config file', async () => {
+    it('should not override existing files by default', async () => {
       const choices: SetupChoices = {
         packageType: PackageType.Library,
-        configGroups: [ConfigGroup.Editor],
+        configGroups: [ConfigGroup.Core],
         overrideExisting: false,
         setupGitHooks: false,
         skipValidation: false,
         dryRun: false,
         publicPackage: false,
         enableUiConfigs: false,
-        useJest: false,
+        testFramework: TestFramework.None,
       };
 
       const generator = new ConfigGenerator(tempDir);
       await generator.generate(choices, false);
 
-      expect(existsSync(join(tempDir, '.editorconfig'))).toBe(true);
-      const content = readFileSync(join(tempDir, '.editorconfig'), 'utf-8');
-      expect(content).toContain('root = true');
+      expect(existsSync(join(tempDir, '.prettierrc.cjs'))).toBe(true);
+      const content = readFileSync(join(tempDir, '.prettierrc.cjs'), 'utf-8');
+      expect(content).toContain('module.exports');
     });
 
     it('should generate multiple config groups', async () => {
@@ -178,7 +178,7 @@ describe('ConfigGenerator', () => {
         dryRun: false,
         publicPackage: false,
         enableUiConfigs: false,
-        useJest: false,
+        testFramework: TestFramework.Vitest,
       };
 
       const generator = new ConfigGenerator(tempDir);
@@ -197,7 +197,7 @@ describe('ConfigGenerator', () => {
         dryRun: false,
         publicPackage: false,
         enableUiConfigs: false,
-        useJest: false,
+        testFramework: TestFramework.None,
       };
 
       const generator = new ConfigGenerator(tempDir);

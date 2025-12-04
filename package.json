@@ -106,6 +106,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "lint": "eslint src",
+    "prettier": "prettier --check .",
     "format": "prettier --write src",
     "changeset": "ensure-changeset && changeset",
     "version": "changeset version",
@@ -118,7 +119,33 @@
     "publish:package:otp": "pnpm run publish:check && pnpm publish --access public --no-git-checks --registry https://registry.npmjs.org --otp",
     "publish:dry-run": "pnpm publish --access public --no-git-checks --dry-run --registry https://registry.npmjs.org",
     "publish:dry-run:token": "pnpm run publish:setup && pnpm publish --access public --no-git-checks --dry-run --registry https://registry.npmjs.org",
-    "release": "pnpm version && pnpm install --lockfile-only"
+    "release": "pnpm version && pnpm install --lockfile-only",
+    "security": "kitiumai-config security",
+    "security:check": "kitiumai-config security check",
+    "security:secrets": "kitiumai-config security secrets",
+    "security:audit": "kitiumai-config security audit",
+    "security:pii": "kitiumai-config security pii",
+    "test:coverage": "kitiumai-config test coverage",
+    "test:watch": "kitiumai-config test watch",
+    "lint:check": "kitiumai-config lint check",
+    "lint:fix": "kitiumai-config lint fix",
+    "lint:format": "kitiumai-config lint format",
+    "lint:report": "kitiumai-config lint report",
+    "git:status": "kitiumai-config git status",
+    "git:branch": "kitiumai-config git branch",
+    "git:clean": "kitiumai-config git clean",
+    "git:validate": "kitiumai-config git validate",
+    "ci:check": "kitiumai-config ci check",
+    "ci:setup": "kitiumai-config ci setup",
+    "ci:health": "kitiumai-config ci health",
+    "governance:check": "kitiumai-config governance check",
+    "governance:setup": "kitiumai-config governance setup",
+    "observability:setup": "kitiumai-config observability setup",
+    "health": "kitiumai-config health",
+    "typecheck": "tsc -b --noEmit",
+    "lint:all": "node --input-type=module -e \"import { lintAll } from '@kitiumai/scripts/lint'; await lintAll(false);\"",
+    "format:fix": "prettier --write .",
+    "ci:verify": "pnpm run lint:all && pnpm run test:coverage && pnpm run typecheck"
   },
   "dependencies": {
     "@commitlint/config-conventional": "^18.6.3",
@@ -138,11 +165,12 @@
     "typescript-eslint": "^8.0.0"
   },
   "devDependencies": {
-    "@kitiumai/scripts": "workspace:*",
+    "@kitiumai/scripts": "^2.0.0",
     "@changesets/cli": "^2.27.1",
     "@types/node": "^24.10.1",
-    "@vitest/ui": "^1.0.0",
+    "@vitest/ui": "^2.1.3",
     "typescript": "^5.6.0",
-    "vitest": "^2.0.0"
+    "vitest": "^2.1.8",
+    "prettier": "^3.6.2"
   }
 }

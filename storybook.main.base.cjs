@@ -1,7 +1,7 @@
-/**
+/*
  * Storybook preset for React + Vite projects.
- * Extend this file from `apps/*/.storybook/main.ts` via:
- * `const base = require('@kitiumai/config/storybook.main.base.cjs');`
+ * Extend this file from your .storybook/main.ts via:
+ * const base = require('@kitiumai/config/storybook.main.base.cjs');
  */
 
 const config = {
@@ -26,4 +26,3 @@ const config = {
 };
 
 module.exports = config;
-

@@ -9,10 +9,10 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     coverage: {
-      reporter: ['text', 'html']
-    }
+      reporter: ['text', 'html'],
+    },
   },
   esbuild: {
-    target: 'es2020'
-  }
+    target: 'es2020',
+  },
 });

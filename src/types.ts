@@ -37,6 +37,10 @@ export enum ConfigFile {
   // Testing
   Vitest = 'vitest',
   Jest = 'jest',
+  Mocha = 'mocha',
+  Jasmine = 'jasmine',
+  Ava = 'ava',
+  Tape = 'tape',
   Playwright = 'playwright',
 
   // Docs
@@ -57,6 +61,8 @@ export enum ConfigFile {
 
   // CI/CD
   GithubCi = 'github-ci',
+  GithubRelease = 'github-release',
+  GithubTagRelease = 'github-tag-release',
 
   // Governance
   Codeowners = 'codeowners',
@@ -77,7 +83,7 @@ export enum ConfigFile {
  */
 export const configGroupMap: Record<ConfigGroup, ConfigFile[]> = {
   [ConfigGroup.Core]: [ConfigFile.TypeScript, ConfigFile.Prettier, ConfigFile.ESLint],
-  [ConfigGroup.Testing]: [ConfigFile.Vitest, ConfigFile.Playwright],
+  [ConfigGroup.Testing]: [ConfigFile.Vitest, ConfigFile.Jest, ConfigFile.Mocha, ConfigFile.Jasmine, ConfigFile.Ava, ConfigFile.Tape, ConfigFile.Playwright],
   [ConfigGroup.Docs]: [ConfigFile.TypeDoc, ConfigFile.Storybook],
   [ConfigGroup.Release]: [ConfigFile.CommitLint, ConfigFile.SemanticRelease, ConfigFile.Changesets],
   [ConfigGroup.Security]: [
@@ -87,7 +93,7 @@ export const configGroupMap: Record<ConfigGroup, ConfigFile[]> = {
     ConfigFile.Dependabot,
     ConfigFile.Npmrc,
   ],
-  [ConfigGroup.Ci]: [ConfigFile.GithubCi],
+  [ConfigGroup.Ci]: [ConfigFile.GithubCi, ConfigFile.GithubRelease, ConfigFile.GithubTagRelease],
   [ConfigGroup.Governance]: [
     ConfigFile.Codeowners,
     ConfigFile.PullRequestTemplate,
@@ -97,6 +103,19 @@ export const configGroupMap: Record<ConfigGroup, ConfigFile[]> = {
   [ConfigGroup.GitHooks]: [ConfigFile.LintStaged, ConfigFile.Husky],
   [ConfigGroup.Editor]: [ConfigFile.EditorConfig],
 };
+
+/**
+ * Test framework enum
+ */
+export enum TestFramework {
+  Vitest = 'vitest',
+  Jest = 'jest',
+  Mocha = 'mocha',
+  Jasmine = 'jasmine',
+  Ava = 'ava',
+  Tape = 'tape',
+  None = 'none',
+}
 
 /**
  * Detected package context
@@ -110,6 +129,7 @@ export interface DetectionResult {
   suggestedGroups: ConfigGroup[];
   packageName: string;
   isMonorepo: boolean;
+  detectedTestFrameworks: TestFramework[];
 }
 
 /**
@@ -124,7 +144,7 @@ export interface SetupChoices {
   dryRun: boolean;
   publicPackage: boolean;
   enableUiConfigs: boolean;
-  useJest: boolean;
+  testFramework: TestFramework;
 }
 
 /**
@@ -137,7 +157,7 @@ export interface CliOptions {
   force: boolean;
   publicPackage: boolean;
   ui: boolean;
-  jest: boolean;
+  testFramework: TestFramework;
 }
 
 /**

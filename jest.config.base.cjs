@@ -14,4 +14,3 @@ module.exports = {
   setupFilesAfterEnv: [],
   verbose: false,
 };
-

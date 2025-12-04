@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';
-import { ConfigFile, ConfigGroup, DetectionResult, PackageType } from './types.js';
+import { ConfigFile, ConfigGroup, DetectionResult, PackageType, TestFramework } from './types.js';
 
 /**
  * Detects package type and existing configuration
@@ -23,6 +23,7 @@ export class ConfigDetector {
     const suggestedGroups = this.suggestConfigGroups(type);
     const packageName = packageJson?.['name'] || 'unknown';
     const isMonorepo = this.checkMonorepo(packageJson);
+    const detectedTestFrameworks = this.detectTestFrameworks(packageJson);
 
     return {
       type,
@@ -31,6 +32,7 @@ export class ConfigDetector {
       suggestedGroups,
       packageName,
       isMonorepo,
+      detectedTestFrameworks,
     };
   }
 
@@ -49,6 +51,72 @@ export class ConfigDetector {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Detect existing test frameworks from dependencies and configs
+   */
+  private detectTestFrameworks(packageJson: Record<string, any> | null): TestFramework[] {
+    if (!packageJson) {
+      return [TestFramework.None];
+    }
+
+    const deps = {
+      ...(packageJson['dependencies'] as Record<string, any>),
+      ...(packageJson['devDependencies'] as Record<string, any>),
+    };
+
+    const detected: TestFramework[] = [];
+    const existingConfigs = this.detectExistingConfigs();
+
+    // Check for Vitest
+    if (deps['vitest'] || existingConfigs[ConfigFile.Vitest]) {
+      detected.push(TestFramework.Vitest);
+    }
+
+    // Check for Jest
+    if (deps['jest'] || existingConfigs[ConfigFile.Jest]) {
+      detected.push(TestFramework.Jest);
+    }
+
+    // Check for Mocha
+    if (deps['mocha']) {
+      detected.push(TestFramework.Mocha);
+    }
+
+    // Check for Jasmine
+    if (deps['jasmine'] || deps['@types/jasmine']) {
+      detected.push(TestFramework.Jasmine);
+    }
+
+    // Check for AVA
+    if (deps['ava']) {
+      detected.push(TestFramework.Ava);
+    }
+
+    // Check for Tape
+    if (deps['tape']) {
+      detected.push(TestFramework.Tape);
+    }
+
+    // If no frameworks detected, suggest based on project type
+    if (detected.length === 0) {
+      const packageType = this.detectPackageType(packageJson);
+      switch (packageType) {
+        case PackageType.Library:
+        case PackageType.CliTool:
+          detected.push(TestFramework.Vitest); // Modern, fast for libraries
+          break;
+        case PackageType.App:
+        case PackageType.NextApp:
+          detected.push(TestFramework.Vitest); // Good for apps too
+          break;
+        default:
+          detected.push(TestFramework.Vitest); // Default recommendation
+      }
+    }
+
+    return detected;
   }
 
   /**
@@ -117,12 +185,19 @@ export class ConfigDetector {
   private detectExistingConfigs(): Record<string, boolean> {
     const configs: Record<string, boolean> = {};
 
+    // Get package name for dynamic filenames
+    const packageName = this.getPackageName();
+
     const configMappings: Record<ConfigFile, string[]> = {
       [ConfigFile.TypeScript]: ['tsconfig.json'],
       [ConfigFile.Prettier]: ['prettier.config.cjs', '.prettierrc', '.prettierrc.json'],
       [ConfigFile.ESLint]: ['eslint.config.js', 'eslint.config.mjs', '.eslintrc', '.eslintrc.json'],
       [ConfigFile.Jest]: ['jest.config.js', 'jest.config.cjs', 'jest.config.ts'],
       [ConfigFile.Vitest]: ['vitest.config.ts', 'vitest.config.js'],
+      [ConfigFile.Mocha]: ['mocha.opts', '.mocharc.js', '.mocharc.json', '.mocharc.yml'],
+      [ConfigFile.Jasmine]: ['jasmine.json', 'spec/support/jasmine.json'],
+      [ConfigFile.Ava]: ['ava.config.js', 'ava.config.cjs', 'ava.config.mjs'],
+      [ConfigFile.Tape]: [], // Tape typically doesn't use config files
       [ConfigFile.Playwright]: ['playwright.config.ts', 'playwright.config.js'],
       [ConfigFile.TypeDoc]: ['typedoc.json', 'typedoc.config.js'],
       [ConfigFile.Storybook]: ['.storybook/main.ts', '.storybook/main.js', '.storybook/main.cjs'],
@@ -135,6 +210,8 @@ export class ConfigDetector {
       [ConfigFile.Dependabot]: ['.github/dependabot.yml'],
       [ConfigFile.Npmrc]: ['.npmrc'],
       [ConfigFile.GithubCi]: ['.github/workflows/ci.yml'],
+      [ConfigFile.GithubRelease]: [`.github/workflows/release-${packageName}.yml`],
+      [ConfigFile.GithubTagRelease]: [`.github/workflows/tag-release-${packageName}.yml`],
       [ConfigFile.Codeowners]: ['.github/CODEOWNERS'],
       [ConfigFile.PullRequestTemplate]: ['.github/pull_request_template.md'],
       [ConfigFile.IssueTemplateBug]: ['.github/ISSUE_TEMPLATE/bug_report.md'],
@@ -222,5 +299,21 @@ export class ConfigDetector {
     };
 
     return suggestions[type] || [ConfigGroup.Core];
+  }
+
+  /**
+   * Get the package name from package.json
+   */
+  private getPackageName(): string {
+    try {
+      const packageJsonPath = join(this.targetDir, 'package.json');
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+      const fullName = packageJson['name'] || 'unknown-package';
+      // Extract the last part after '/' or '@' for scoped packages
+      const parts = fullName.split('/');
+      return parts[parts.length - 1] || 'unknown-package';
+    } catch {
+      return 'unknown-package';
+    }
   }
 }

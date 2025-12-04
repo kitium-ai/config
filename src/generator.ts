@@ -1,7 +1,7 @@
 import { writeFileSync, existsSync, mkdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { ConfigFile, ConfigGroup, SetupChoices, configGroupMap } from './types.js';
+import { ConfigFile, ConfigGroup, SetupChoices, configGroupMap, TestFramework } from './types.js';
 
 interface ConfigTemplate {
   filename: string;
@@ -90,11 +90,39 @@ export class ConfigGenerator {
         let filteredFiles = [...groupFiles];
 
         if (group === ConfigGroup.Testing) {
-          filteredFiles = filteredFiles.filter((file) => file !== ConfigFile.Jest);
+          // Filter out all test frameworks initially
+          filteredFiles = filteredFiles.filter((file) =>
+            file !== ConfigFile.Jest &&
+            file !== ConfigFile.Vitest &&
+            file !== ConfigFile.Mocha &&
+            file !== ConfigFile.Jasmine &&
+            file !== ConfigFile.Ava &&
+            file !== ConfigFile.Tape
+          );
 
-          if (choices.useJest) {
-            filteredFiles = filteredFiles.filter((file) => file !== ConfigFile.Vitest);
-            filteredFiles.push(ConfigFile.Jest);
+          // Add back the selected test framework
+          switch (choices.testFramework) {
+            case TestFramework.Jest:
+              filteredFiles.push(ConfigFile.Jest);
+              break;
+            case TestFramework.Vitest:
+              filteredFiles.push(ConfigFile.Vitest);
+              break;
+            case TestFramework.Mocha:
+              filteredFiles.push(ConfigFile.Mocha);
+              break;
+            case TestFramework.Jasmine:
+              filteredFiles.push(ConfigFile.Jasmine);
+              break;
+            case TestFramework.Ava:
+              filteredFiles.push(ConfigFile.Ava);
+              break;
+            case TestFramework.Tape:
+              filteredFiles.push(ConfigFile.Tape);
+              break;
+            default:
+              // Default to Vitest
+              filteredFiles.push(ConfigFile.Vitest);
           }
 
           if (!choices.enableUiConfigs) {
@@ -158,6 +186,10 @@ export class ConfigGenerator {
         return this.getNpmrcTemplate();
       case ConfigFile.GithubCi:
         return this.getGithubCiTemplate();
+      case ConfigFile.GithubRelease:
+        return this.getGithubReleaseTemplate();
+      case ConfigFile.GithubTagRelease:
+        return this.getGithubTagReleaseTemplate();
       case ConfigFile.Codeowners:
         return this.getCodeownersTemplate();
       case ConfigFile.PullRequestTemplate:
@@ -806,6 +838,312 @@ module.exports = {
     };
   }
 
+  private getGithubReleaseTemplate(): ConfigTemplate {
+    const content =
+      `name: Release\n\n` +
+      `on:\n` +
+      `  push:\n` +
+      `    tags:\n` +
+      `      - 'v*'\n` +
+      `  workflow_dispatch:\n` +
+      `    inputs:\n` +
+      `      tag:\n` +
+      `        description: 'Tag to release (e.g., v1.0.0)'\n` +
+      `        required: true\n` +
+      `        type: string\n\n` +
+      `permissions:\n` +
+      `  contents: write\n` +
+      `  id-token: write\n\n` +
+      `jobs:\n` +
+      `  release:\n` +
+      `    name: "Release"\n` +
+      `    runs-on: ubuntu-latest\n` +
+      `    container:\n` +
+      `      image: docker.io/ashishyd/kitiumai-dev:latest\n\n` +
+      `    steps:\n` +
+      `      - name: Checkout\n` +
+      `        uses: actions/checkout@v4\n` +
+      `        with:\n` +
+      `          fetch-depth: 0\n` +
+      `          token: \${{ secrets.GITHUB_TOKEN }}\n\n` +
+      `      - name: Setup Git\n` +
+      `        run: |\n` +
+      `          git config --global user.name "github-actions[bot]"\n` +
+      `          git config --global user.email "github-actions[bot]@users.noreply.github.com"\n` +
+      `          git config --global --add safe.directory \$GITHUB_WORKSPACE\n\n` +
+      `      - name: Environment health check\n` +
+      `        run: |\n` +
+      `          echo "📋 Environment diagnostics:"\n` +
+      `          echo "Node: \$(node --version)"\n` +
+      `          echo "NPM: \$(npm --version)"\n` +
+      `          echo "Git: \$(git --version)"\n` +
+      `          echo "Working directory: \$(pwd)"\n` +
+      `          echo "User: \$(whoami)"\n\n` +
+      `      - name: Ensure pnpm available (corepack fallback)\n` +
+      `        run: |\n` +
+      `          if ! command -v pnpm >/dev/null 2>&1; then\n` +
+      `            echo "ℹ️ pnpm not found, enabling via corepack"\n` +
+      `            corepack enable\n` +
+      `            corepack prepare pnpm@8 -o /usr/local/bin/pnpm\n` +
+      `          fi\n\n` +
+      `      - name: Get tag name\n` +
+      `        id: tag\n` +
+      `        run: |\n` +
+      `          if [ "\${{ github.event_name }}" = "push" ]; then\n` +
+      `            TAG_NAME="\${GITHUB_REF#refs/tags/}"\n` +
+      `          else\n` +
+      `            TAG_NAME="\${{ inputs.tag }}"\n` +
+      `          fi\n` +
+      `          echo "tag=\${TAG_NAME}" >> "\$GITHUB_OUTPUT"\n` +
+      `          echo "Processing tag: \$TAG_NAME"\n\n` +
+      `      - name: Extract version from tag\n` +
+      `        id: version\n` +
+      `        run: |\n` +
+      `          VERSION=\$(echo "\${{ steps.tag.outputs.tag }}" | sed 's/^v//')\n` +
+      `          echo "version=\${VERSION}" >> "\$GITHUB_OUTPUT"\n` +
+      `          echo "Extracted version: \$VERSION"\n\n` +
+      `      - name: Install dependencies\n` +
+      `        run: pnpm install --frozen-lockfile --prefer-offline --ignore-scripts\n\n` +
+      `      - name: Build package\n` +
+      `        run: |\n` +
+      `          pnpm run build\n\n` +
+      `      - name: Run tests\n` +
+      `        run: |\n` +
+      `          pnpm run test\n\n` +
+      `      - name: Run linting\n` +
+      `        run: |\n` +
+      `          pnpm run lint\n\n` +
+      `      - name: Security checks\n` +
+      `        run: |\n` +
+      `          pnpm exec kitiumai-config security check || echo "⚠️ Security check failed, continuing..."\n\n` +
+      `      - name: Update package version\n` +
+      `        run: |\n` +
+      `          CURRENT_VERSION=\$(node -p "require('./package.json').version")\n` +
+      `          TARGET_VERSION="\${{ steps.version.outputs.version }}"\n\n` +
+      `          if [ "\$CURRENT_VERSION" = "\$TARGET_VERSION" ]; then\n` +
+      `            echo "ℹ️ Version already set to \$TARGET_VERSION, skipping npm version"\n` +
+      `          else\n` +
+      `            echo "📦 Updating package.json version from \$CURRENT_VERSION to \$TARGET_VERSION"\n` +
+      `            npm version "\$TARGET_VERSION" --no-git-tag-version\n` +
+      `          fi\n\n` +
+      `      - name: Configure npm for trusted publishing\n` +
+      `        env:\n` +
+      `          NPM_TOKEN: \${{ secrets.NPM_TOKEN }}\n` +
+      `        run: |\n` +
+      `          if [ -z "\$NPM_TOKEN" ]; then\n` +
+      `            echo "❌ NPM_TOKEN is required for publishing"\n` +
+      `            exit 1\n` +
+      `          fi\n\n` +
+      `          echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > .npmrc\n` +
+      `          npm config set provenance true\n` +
+      `          echo "✅ npm configured for trusted publishing"\n\n` +
+      `      - name: Check if version already published\n` +
+      `        id: version_check\n` +
+      `        run: |\n` +
+      `          VERSION="\${{ steps.version.outputs.version }}"\n` +
+      `          PACKAGE_NAME="@kitiumai/config"\n\n` +
+      `          if npm view "\${PACKAGE_NAME}@\${VERSION}" version 2>/dev/null; then\n` +
+      `            echo "already_published=true" >> "\$GITHUB_OUTPUT"\n` +
+      `            echo "⏭️  Version \${VERSION} already published to npm, skipping publish step"\n` +
+      `          else\n` +
+      `            echo "already_published=false" >> "\$GITHUB_OUTPUT"\n` +
+      `            echo "📦 Version \${VERSION} not found on npm, proceeding with publish"\n` +
+      `          fi\n\n` +
+      `      - name: Publish to NPM\n` +
+      `        if: steps.version_check.outputs.already_published != 'true'\n` +
+      `        env:\n` +
+      `          NPM_TOKEN: \${{ secrets.NPM_TOKEN }}\n` +
+      `        run: |\n` +
+      `          npm publish --access public --provenance\n\n` +
+      `      - name: Generate SBOM\n` +
+      `        continue-on-error: true\n` +
+      `        run: |\n` +
+      `          pnpm exec kitiumai-config observability setup || echo "⚠️ Observability setup failed"\n` +
+      `          echo '{"bomFormat":"CycloneDX","specVersion":"1.5","version":1,"metadata":{"component":{"name":"@kitiumai/config","version":"\${{ steps.version.outputs.version }}"}}}' > sbom.json\n\n` +
+      `      - name: Create GitHub Release\n` +
+      `        id: create_release\n` +
+      `        uses: actions/create-release@v1\n` +
+      `        env:\n` +
+      `          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}\n` +
+      `        with:\n` +
+      `          tag_name: \${{ steps.tag.outputs.tag }}\n` +
+      `          release_name: "@kitiumai/config \${{ steps.version.outputs.version }}"\n` +
+      `          body: |\n` +
+      `            ## 🚀 Release @kitiumai/config@\${{ steps.version.outputs.version }}\n\n` +
+      `            ### What's New\n` +
+      `            - Shared configuration presets for TypeScript, ESLint, Prettier, and Vitest\n` +
+      `            - Enhanced CLI tool with security, testing, and governance features\n` +
+      `            - Comprehensive CI/CD workflow templates\n` +
+      `            - Integrated with @kitiumai/scripts for advanced automation\n\n` +
+      `            ### Installation\n` +
+      `            \`\`\`bash\n` +
+      `            npm install @kitiumai/config@\${{ steps.version.outputs.version }}\n` +
+      `            # or\n` +
+      `            pnpm add @kitiumai/config@\${{ steps.version.outputs.version }}\n` +
+      `            \`\`\`\n\n` +
+      `            ### Usage\n` +
+      `            \`\`\`bash\n` +
+      `            npx @kitiumai/config setup --auto\n` +
+      `            \`\`\`\n\n` +
+      `            ### Documentation\n` +
+      `            📖 [API Reference](https://github.com/kitiumai/config/blob/main/README.md)\n` +
+      `            🏠 [Package README](https://github.com/kitiumai/config/blob/main/README.md)\n\n` +
+      `            ### Security\n` +
+      `            🔒 [SBOM](https://github.com/kitiumai/config/releases/download/\${{ steps.tag.outputs.tag }}/sbom.json)\n` +
+      `          draft: false\n` +
+      `          prerelease: false\n\n` +
+      `      - name: Upload SBOM to release\n` +
+      `        continue-on-error: true\n` +
+      `        uses: actions/upload-release-asset@v1\n` +
+      `        env:\n` +
+      `          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}\n` +
+      `        with:\n` +
+      `          upload_url: \${{ steps.create_release.outputs.upload_url }}\n` +
+      `          asset_path: sbom.json\n` +
+      `          asset_name: sbom.json\n` +
+      `          asset_content_type: application/json\n\n` +
+      `      - name: Notify on success\n` +
+      `        if: success()\n` +
+      `        run: |\n` +
+      `          echo "✅ Successfully released @kitiumai/config@\${{ steps.version.outputs.version }}"\n` +
+      `          echo "📦 Published to NPM: https://www.npmjs.com/package/@kitiumai/config/v/\${{ steps.version.outputs.version }}"\n` +
+      `          echo "🏷️  GitHub Release: https://github.com/kitiumai/config/releases/tag/\${{ steps.tag.outputs.tag }}"\n\n` +
+      `      - name: Notify on failure\n` +
+      `        if: failure()\n` +
+      `        run: |\n` +
+      `          echo "❌ Failed to release @kitiumai/config@\${{ steps.version.outputs.version }}"\n` +
+      `          echo "Please check the workflow logs for details"`;
+
+    return {
+      filename: `.github/workflows/release-${this.getPackageName()}.yml`,
+      content,
+    };
+  }
+
+  private getGithubTagReleaseTemplate(): ConfigTemplate {
+    const content =
+      `name: Tag Release\n\n` +
+      `on:\n` +
+      `  workflow_dispatch:\n` +
+      `    inputs:\n` +
+      `      version:\n` +
+      `        description: 'Version to tag (e.g., 1.0.0, 1.1.0, 2.0.0)'\n` +
+      `        required: true\n` +
+      `        type: string\n` +
+      `      release_type:\n` +
+      `        description: 'Release type'\n` +
+      `        required: true\n` +
+      `        default: 'patch'\n` +
+      `        type: choice\n` +
+      `        options:\n` +
+      `          - patch\n` +
+      `          - minor\n` +
+      `          - major\n\n` +
+      `permissions:\n` +
+      `  contents: write\n\n` +
+      `jobs:\n` +
+      `  tag-release:\n` +
+      `    name: "Create Release Tag"\n` +
+      `    runs-on: ubuntu-latest\n` +
+      `    container:\n` +
+      `      image: docker.io/ashishyd/kitiumai-dev:latest\n\n` +
+      `    steps:\n` +
+      `      - name: Checkout\n` +
+      `        uses: actions/checkout@v4\n` +
+      `        with:\n` +
+      `          fetch-depth: 0\n` +
+      `          token: \${{ secrets.GITHUB_TOKEN }}\n\n` +
+      `      - name: Setup Git\n` +
+      `        run: |\n` +
+      `          git config --global user.name "github-actions[bot]"\n` +
+      `          git config --global user.email "github-actions[bot]@users.noreply.github.com"\n` +
+      `          git config --global --add safe.directory \$GITHUB_WORKSPACE\n\n` +
+      `      - name: Environment health check\n` +
+      `        run: |\n` +
+      `          echo "📋 Environment diagnostics:"\n` +
+      `          echo "Node: \$(node --version)"\n` +
+      `          echo "NPM: \$(npm --version)"\n` +
+      `          echo "Git: \$(git --version)"\n` +
+      `          echo "Working directory: \$(pwd)"\n` +
+      `          echo "User: \$(whoami)"\n\n` +
+      `      - name: Ensure pnpm available (corepack fallback)\n` +
+      `        run: |\n` +
+      `          if ! command -v pnpm >/dev/null 2>&1; then\n` +
+      `            echo "ℹ️ pnpm not found, enabling via corepack"\n` +
+      `            corepack enable\n` +
+      `            corepack prepare pnpm@8 -o /usr/local/bin/pnpm\n` +
+      `          fi\n\n` +
+      `      - name: Validate version format\n` +
+      `        run: |\n` +
+      `          VERSION="\${{ inputs.version }}"\n` +
+      `          if [[ ! \$VERSION =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then\n` +
+      `            echo "❌ Invalid version format: \$VERSION"\n` +
+      `            echo "Version must be in format: x.y.z (e.g., 1.0.0, 2.1.3)"\n` +
+      `            exit 1\n` +
+      `          fi\n` +
+      `          echo "✅ Valid version format: \$VERSION"\n\n` +
+      `      - name: Check if tag already exists\n` +
+      `        id: check_tag\n` +
+      `        run: |\n` +
+      `          TAG="v\${{ inputs.version }}"\n` +
+      `          if git tag -l | grep -q "^\$TAG\$"; then\n` +
+      `            echo "❌ Tag \$TAG already exists"\n` +
+      `            echo "exists=true" >> "\$GITHUB_OUTPUT"\n` +
+      `            exit 1\n` +
+      `          else\n` +
+      `            echo "✅ Tag \$TAG is available"\n` +
+      `            echo "exists=false" >> "\$GITHUB_OUTPUT"\n` +
+      `          fi\n\n` +
+      `      - name: Install dependencies\n` +
+      `        run: pnpm install --frozen-lockfile --prefer-offline --ignore-scripts\n\n` +
+      `      - name: Build and test package\n` +
+      `        run: |\n` +
+      `          echo "🔨 Building package..."\n` +
+      `          pnpm run build\n\n` +
+      `          echo "🧪 Running tests..."\n` +
+      `          pnpm run test\n\n` +
+      `          echo "🔍 Running linting..."\n` +
+      `          pnpm run lint\n\n` +
+      `      - name: Update package.json version\n` +
+      `        run: |\n` +
+      `          CURRENT_VERSION=\$(node -p "require('./package.json').version")\n` +
+      `          TARGET_VERSION="\${{ inputs.version }}"\n\n` +
+      `          if [ "\$CURRENT_VERSION" = "\$TARGET_VERSION" ]; then\n` +
+      `            echo "ℹ️ Version already set to \$TARGET_VERSION, skipping npm version"\n` +
+      `          else\n` +
+      `            echo "📦 Updating package.json version from \$CURRENT_VERSION to \$TARGET_VERSION"\n` +
+      `            npm version "\$TARGET_VERSION" --no-git-tag-version\n` +
+      `          fi\n\n` +
+      `      - name: Commit version bump\n` +
+      `        run: |\n` +
+      `          if git diff --quiet "package.json"; then\n` +
+      `            echo "ℹ️ No changes to commit"\n` +
+      `          else\n` +
+      `            git add "package.json"\n` +
+      `            git commit -m "chore: bump @kitiumai/config to v\${{ inputs.version }}"\n` +
+      `            git push origin main\n` +
+      `          fi\n\n` +
+      `      - name: Create and push tag\n` +
+      `        run: |\n` +
+      `          TAG="v\${{ inputs.version }}"\n` +
+      `          echo "🏷️  Creating tag: \$TAG"\n` +
+      `          git tag "\$TAG"\n` +
+      `          git push origin "\$TAG"\n\n` +
+      `      - name: Verify tag creation\n` +
+      `        run: |\n` +
+      `          TAG="v\${{ inputs.version }}"\n` +
+      `          echo "✅ Tag created successfully: \$TAG"\n` +
+      `          echo "🔗 Tag URL: https://github.com/kitiumai/config/releases/tag/\$TAG"\n` +
+      `          echo ""\n` +
+      `          echo "The release workflow will now be triggered automatically."\n` +
+      `          echo "Monitor the 'Release @kitiumai/config' workflow for the publishing status."`;
+
+    return {
+      filename: `.github/workflows/tag-release-${this.getPackageName()}.yml`,
+      content,
+    };
+  }
+
   private getCodeownersTemplate(): ConfigTemplate {
     const content =
       `# Default ownership rules\n` +
@@ -903,6 +1241,22 @@ indent_style = space
 indent_style = tab
 \n`,
     };
+  }
+
+  /**
+   * Get package name from package.json (extracts the last part after /)
+   */
+  private getPackageName(): string {
+    try {
+      const packageJsonPath = join(this.targetDir, 'package.json');
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+      const fullName = packageJson['name'] || 'unknown-package';
+      // Extract the last part after '/' or '@' for scoped packages
+      const parts = fullName.split('/');
+      return parts[parts.length - 1] || 'unknown-package';
+    } catch {
+      return 'unknown-package';
+    }
   }
 
   /**

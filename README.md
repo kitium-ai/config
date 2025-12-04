@@ -30,11 +30,12 @@ npx kitiumai-config --dry-run
 ```
 
 The CLI tool will:
+
 - 🔍 Detect your package type (Library, App, Next.js, CLI, Monorepo)
 - 📋 Suggest appropriate configuration groups
 - ❓ Prompt you for configuration choices
 - 📝 Generate all necessary config files
-- ⚠️  Warn about existing files (with option to override)
+- ⚠️ Warn about existing files (with option to override)
 
 ## CLI Tool
 
@@ -137,9 +138,9 @@ Package manifests are automatically synced with scripts from `package.template.j
     "extends": "@kitiumai/config/tsconfig.base.json",
     "compilerOptions": {
       "baseUrl": ".",
-      "outDir": "./dist"
+      "outDir": "./dist",
     },
-    "include": ["src"]
+    "include": ["src"],
   }
   ```
 
@@ -169,12 +170,7 @@ Package manifests are automatically synced with scripts from `package.template.j
 Use the exported detector, prompter, and generator when you need to embed setup flows into custom tooling or migrations:
 
 ```ts
-import {
-  ConfigDetector,
-  ConfigGenerator,
-  ConfigGroup,
-  ConfigPrompter,
-} from '@kitiumai/config';
+import { ConfigDetector, ConfigGenerator, ConfigGroup, ConfigPrompter } from '@kitiumai/config';
 
 const detector = new ConfigDetector('/path/to/repo');
 const detection = await detector.detect();

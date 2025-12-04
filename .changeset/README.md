@@ -11,6 +11,7 @@ pnpm changeset
 ```
 
 This will prompt you to:
+
 1. Select which packages to include (only `@kitiumai/config` in this case)
 2. Choose the version bump type (major, minor, or patch)
 3. Write a summary of the changes
@@ -28,6 +29,6 @@ When you're ready to release:
    - Requires `NPM_TOKEN` environment variable
 
 Or use the automated workflow scripts:
+
 - `pnpm release` - Version and prepare for release
 - `pnpm publish:package` - Publish to npm
-

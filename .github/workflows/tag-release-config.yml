@@ -1,0 +1,152 @@
+name: Tag @kitiumai/config Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to tag (e.g., 1.0.0, 1.1.0, 2.0.0)'
+        required: true
+        type: string
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  tag-release:
+    name: 'Create Release Tag'
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/ashishyd/kitiumai-dev:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory $GITHUB_WORKSPACE
+
+      - name: Environment health check
+        run: |
+          echo "📋 Environment diagnostics:"
+          echo "Node: $(node --version)"
+          echo "NPM: $(npm --version)"
+          echo "Git: $(git --version)"
+          echo "Working directory: $(pwd)"
+          echo "User: $(whoami)"
+
+      - name: Ensure pnpm available (corepack fallback)
+        run: |
+          if ! command -v pnpm >/dev/null 2>&1; then
+            echo "ℹ️ pnpm not found, enabling via corepack"
+            corepack enable
+            corepack prepare pnpm@8 -o /usr/local/bin/pnpm
+          fi
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ inputs.version }}"
+          if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Version must be in format: x.y.z (e.g., 1.0.0, 2.1.3)"
+            exit 1
+          fi
+          echo "✅ Valid version format: $VERSION"
+
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          TAG="v${{ inputs.version }}"
+          if git tag -l | grep -q "^$TAG$"; then
+            echo "❌ Tag $TAG already exists"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            exit 1
+          else
+            echo "✅ Tag $TAG is available"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline --ignore-scripts
+
+      - name: Build and test package
+        run: |
+          # Prefer local package dir if running inside monorepo
+          WORKDIR="tooling/config"
+          if [ -d "$WORKDIR" ]; then
+            echo "ℹ️ Using working dir: $WORKDIR"
+            cd "$WORKDIR"
+          else
+            echo "ℹ️ tooling/config not found; using repo root"
+          fi
+
+          echo "🔨 Building package..."
+          pnpm run build
+
+          echo "🧪 Running tests..."
+          pnpm run test
+
+          echo "🔍 Running linting..."
+          pnpm run lint
+
+      - name: Update package.json version
+        run: |
+          WORKDIR="tooling/config"
+          if [ -d "$WORKDIR" ]; then cd "$WORKDIR"; fi
+
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          TARGET_VERSION="${{ inputs.version }}"
+
+          if [ "$CURRENT_VERSION" = "$TARGET_VERSION" ]; then
+            echo "ℹ️ Version already set to $TARGET_VERSION, skipping npm version"
+          else
+            echo "📦 Updating package.json version from $CURRENT_VERSION to $TARGET_VERSION"
+            npm version "$TARGET_VERSION" --no-git-tag-version
+          fi
+
+      - name: Commit version bump
+        run: |
+          # Determine the package.json path
+          if [ -f "tooling/config/package.json" ]; then
+            PKG_PATH="tooling/config/package.json"
+          else
+            PKG_PATH="package.json"
+          fi
+
+          if git diff --quiet "$PKG_PATH"; then
+            echo "ℹ️ No changes to commit"
+          else
+            git add "$PKG_PATH"
+            git commit -m "chore: bump @kitiumai/config to v${{ inputs.version }}"
+            git push origin main
+          fi
+
+      - name: Create and push tag
+        run: |
+          TAG="v${{ inputs.version }}"
+          echo "🏷️  Creating tag: $TAG"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Verify tag creation
+        run: |
+          TAG="v${{ inputs.version }}"
+          echo "✅ Tag created successfully: $TAG"
+          echo "🔗 Tag URL: https://github.com/kitiumai/config/releases/tag/$TAG"
+          echo ""
+          echo "The release workflow will now be triggered automatically."
+          echo "Monitor the 'Release @kitiumai/config' workflow for the publishing status."
