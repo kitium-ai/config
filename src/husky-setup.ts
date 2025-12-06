@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { existsSync, mkdirSync, writeFileSync, chmodSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync, chmodSync, readFileSync } from 'fs';
 import { join } from 'path';
 import chalk from 'chalk';
 
@@ -62,7 +62,7 @@ export async function setupHusky(
     if (existsSync(preCommitPath)) {
       try {
         chmodSync(preCommitPath, 0o755);
-      } catch (error) {
+      } catch {
         // chmod might fail on Windows, that's okay
         result.warnings.push('Could not make pre-commit hook executable (this is fine on Windows)');
       }
@@ -74,7 +74,7 @@ export async function setupHusky(
         cwd: targetDir,
         stdio: 'pipe',
       });
-    } catch (error) {
+    } catch {
       result.warnings.push('Could not configure git hooks path');
     }
 
@@ -100,9 +100,7 @@ async function ensureHuskyInstalled(targetDir: string, dryRun: boolean): Promise
   }
 
   try {
-    const packageJson = JSON.parse(
-      require('fs').readFileSync(packageJsonPath, 'utf-8')
-    ) as {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8')) as {
       devDependencies?: Record<string, string>;
     };
 
@@ -122,11 +120,12 @@ async function ensureHuskyInstalled(targetDir: string, dryRun: boolean): Promise
     // Detect package manager
     const packageManager = detectPackageManager(targetDir);
 
-    const installCommand = packageManager === 'pnpm'
-      ? 'pnpm add -D husky'
-      : packageManager === 'yarn'
-      ? 'yarn add -D husky'
-      : 'npm install --save-dev husky';
+    const installCommand =
+      packageManager === 'pnpm'
+        ? 'pnpm add -D husky'
+        : packageManager === 'yarn'
+          ? 'yarn add -D husky'
+          : 'npm install --save-dev husky';
 
     execSync(installCommand, {
       cwd: targetDir,

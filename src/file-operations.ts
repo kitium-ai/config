@@ -101,7 +101,7 @@ export class FileOperations {
   /**
    * Read and parse JSON file
    */
-  readJsonFile<T = any>(relativePath: string): T | null {
+  readJsonFile<T = unknown>(relativePath: string): T | null {
     const content = this.readFile(relativePath);
     if (!content) {
       return null;
@@ -118,7 +118,7 @@ export class FileOperations {
    */
   writeJsonFile(
     relativePath: string,
-    data: any,
+    data: unknown,
     options: FileWriterOptions
   ): FileOperationResult {
     const content = `${JSON.stringify(data, null, 2)}\n`;
@@ -159,10 +159,7 @@ export class FileOperations {
   /**
    * Merge package.json updates intelligently
    */
-  private mergePackageJson(
-    original: PackageJson,
-    updates: Partial<PackageJson>
-  ): PackageJson {
+  private mergePackageJson(original: PackageJson, updates: Partial<PackageJson>): PackageJson {
     const merged = { ...original };
 
     // Merge scripts
@@ -205,8 +202,12 @@ export class FileOperations {
     }
 
     // Simple field merges
-    if (updates.license) merged.license = updates.license;
-    if (updates.private !== undefined) merged.private = updates.private;
+    if (updates.license) {
+      merged.license = updates.license;
+    }
+    if (updates.private !== undefined) {
+      merged.private = updates.private;
+    }
 
     return merged;
   }
@@ -228,6 +229,15 @@ export interface PackageJson {
   description?: string;
   license?: string;
   private?: boolean;
+  main?: string;
+  types?: string;
+  exports?: unknown;
+  bin?: string | Record<string, string>;
+  workspaces?: string[] | Record<string, unknown>;
+  pnpm?: {
+    workspaces?: string[] | Record<string, unknown>;
+    [key: string]: unknown;
+  };
   scripts?: Record<string, string>;
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
@@ -237,7 +247,7 @@ export interface PackageJson {
     registry?: string;
   };
   files?: string[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**

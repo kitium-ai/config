@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';
 import { ConfigFile, ConfigGroup, DetectionResult, PackageType, TestFramework } from './types.js';
+import { getSuggestedConfigGroups } from './config-suggestions.js';
+import type { PackageJson } from './file-operations.js';
 
 /**
  * Detects package type and existing configuration
@@ -39,7 +41,7 @@ export class ConfigDetector {
   /**
    * Load package.json from target directory
    */
-  private loadPackageJson(): Record<string, any> | null {
+  private loadPackageJson(): PackageJson | null {
     const packageJsonPath = join(this.targetDir, 'package.json');
     if (!existsSync(packageJsonPath)) {
       return null;
@@ -47,7 +49,7 @@ export class ConfigDetector {
 
     try {
       const content = readFileSync(packageJsonPath, 'utf-8');
-      return JSON.parse(content) as Record<string, any>;
+      return JSON.parse(content) as PackageJson;
     } catch {
       return null;
     }
@@ -56,14 +58,14 @@ export class ConfigDetector {
   /**
    * Detect existing test frameworks from dependencies and configs
    */
-  private detectTestFrameworks(packageJson: Record<string, any> | null): TestFramework[] {
+  private detectTestFrameworks(packageJson: PackageJson | null): TestFramework[] {
     if (!packageJson) {
       return [TestFramework.None];
     }
 
-    const deps = {
-      ...(packageJson['dependencies'] as Record<string, any>),
-      ...(packageJson['devDependencies'] as Record<string, any>),
+    const deps: Record<string, string> = {
+      ...(packageJson.dependencies ?? {}),
+      ...(packageJson.devDependencies ?? {}),
     };
 
     const detected: TestFramework[] = [];
@@ -122,22 +124,22 @@ export class ConfigDetector {
   /**
    * Detect package type from package.json
    */
-  private detectPackageType(packageJson: Record<string, any> | null): PackageType {
+  private detectPackageType(packageJson: PackageJson | null): PackageType {
     if (!packageJson) {
       return PackageType.Unknown;
     }
 
     // Check for workspaces (monorepo root)
-    const workspaces = packageJson['workspaces'];
-    const pnpm = packageJson['pnpm'] as Record<string, any>;
-    if (workspaces || (pnpm && pnpm['workspaces'])) {
+    const workspaces = packageJson.workspaces;
+    const pnpmWorkspaces = packageJson.pnpm?.workspaces;
+    if (workspaces || pnpmWorkspaces) {
       return PackageType.MonorepoRoot;
     }
 
     // Check for Next.js
-    const deps = {
-      ...(packageJson['dependencies'] as Record<string, any>),
-      ...(packageJson['devDependencies'] as Record<string, any>),
+    const deps: Record<string, string> = {
+      ...(packageJson.dependencies ?? {}),
+      ...(packageJson.devDependencies ?? {}),
     };
 
     if (deps['next']) {
@@ -145,17 +147,17 @@ export class ConfigDetector {
     }
 
     // Check for private app flag
-    if (packageJson['private'] === true) {
+    if (packageJson.private === true) {
       return PackageType.App;
     }
 
     // Check for bin field (CLI tool)
-    if (packageJson['bin']) {
+    if (packageJson.bin) {
       return PackageType.CliTool;
     }
 
     // Check for main/exports (library)
-    if (packageJson['main'] || packageJson['exports'] || packageJson['types']) {
+    if (packageJson.main || packageJson.exports || packageJson.types) {
       return PackageType.Library;
     }
 
@@ -219,6 +221,7 @@ export class ConfigDetector {
       [ConfigFile.LintStaged]: ['lint-staged.config.js', 'lint-staged.config.cjs', '.lintstagedrc'],
       [ConfigFile.Husky]: ['.husky'],
       [ConfigFile.EditorConfig]: ['.editorconfig'],
+      [ConfigFile.Gitignore]: ['.gitignore'],
     };
 
     for (const [configType, filePaths] of Object.entries(configMappings)) {
@@ -233,72 +236,21 @@ export class ConfigDetector {
   /**
    * Check if this is a monorepo
    */
-  private checkMonorepo(packageJson: Record<string, any> | null): boolean {
+  private checkMonorepo(packageJson: PackageJson | null): boolean {
     if (!packageJson) {
       return false;
     }
 
-    const workspaces = packageJson['workspaces'];
-    const pnpm = packageJson['pnpm'] as Record<string, any>;
-    return !!(workspaces || (pnpm && pnpm['workspaces']));
+    const workspaces = packageJson.workspaces;
+    const pnpmWorkspaces = packageJson.pnpm?.workspaces;
+    return Boolean(workspaces || pnpmWorkspaces);
   }
 
   /**
    * Suggest configuration groups based on package type
    */
   private suggestConfigGroups(type: PackageType): ConfigGroup[] {
-    const suggestions: Record<PackageType, ConfigGroup[]> = {
-      [PackageType.Library]: [
-        ConfigGroup.Core,
-        ConfigGroup.Testing,
-        ConfigGroup.Docs,
-        ConfigGroup.Security,
-        ConfigGroup.Ci,
-        ConfigGroup.Governance,
-        ConfigGroup.Editor,
-      ],
-      [PackageType.App]: [
-        ConfigGroup.Core,
-        ConfigGroup.Testing,
-        ConfigGroup.Security,
-        ConfigGroup.Ci,
-        ConfigGroup.GitHooks,
-        ConfigGroup.Governance,
-        ConfigGroup.Editor,
-      ],
-      [PackageType.NextApp]: [
-        ConfigGroup.Core,
-        ConfigGroup.Testing,
-        ConfigGroup.Docs,
-        ConfigGroup.Security,
-        ConfigGroup.Ci,
-        ConfigGroup.GitHooks,
-        ConfigGroup.Governance,
-        ConfigGroup.Editor,
-      ],
-      [PackageType.CliTool]: [
-        ConfigGroup.Core,
-        ConfigGroup.Testing,
-        ConfigGroup.Security,
-        ConfigGroup.Ci,
-        ConfigGroup.GitHooks,
-        ConfigGroup.Governance,
-        ConfigGroup.Editor,
-      ],
-      [PackageType.MonorepoRoot]: [
-        ConfigGroup.Core,
-        ConfigGroup.Testing,
-        ConfigGroup.Release,
-        ConfigGroup.Security,
-        ConfigGroup.Ci,
-        ConfigGroup.Governance,
-        ConfigGroup.GitHooks,
-        ConfigGroup.Editor,
-      ],
-      [PackageType.Unknown]: [ConfigGroup.Core, ConfigGroup.Security, ConfigGroup.Editor],
-    };
-
-    return suggestions[type] || [ConfigGroup.Core];
+    return getSuggestedConfigGroups(type);
   }
 
   /**

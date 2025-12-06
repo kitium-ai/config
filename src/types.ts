@@ -87,7 +87,15 @@ export enum ConfigFile {
  */
 export const configGroupMap: Record<ConfigGroup, ConfigFile[]> = {
   [ConfigGroup.Core]: [ConfigFile.TypeScript, ConfigFile.Prettier, ConfigFile.ESLint],
-  [ConfigGroup.Testing]: [ConfigFile.Vitest, ConfigFile.Jest, ConfigFile.Mocha, ConfigFile.Jasmine, ConfigFile.Ava, ConfigFile.Tape, ConfigFile.Playwright],
+  [ConfigGroup.Testing]: [
+    ConfigFile.Vitest,
+    ConfigFile.Jest,
+    ConfigFile.Mocha,
+    ConfigFile.Jasmine,
+    ConfigFile.Ava,
+    ConfigFile.Tape,
+    ConfigFile.Playwright,
+  ],
   [ConfigGroup.Docs]: [ConfigFile.TypeDoc, ConfigFile.Storybook],
   [ConfigGroup.Release]: [ConfigFile.CommitLint, ConfigFile.SemanticRelease, ConfigFile.Changesets],
   [ConfigGroup.Security]: [
@@ -144,9 +152,9 @@ export interface SetupChoices {
   packageType: PackageType;
   configGroups: ConfigGroup[];
   /** Optional: Specific config files to include/exclude (granular control) */
-  selectedConfigFiles?: ConfigFile[];
+  selectedConfigFiles?: ConfigFile[] | undefined;
   /** Selection mode: 'group' (select by groups) or 'granular' (select individual files) */
-  selectionMode?: 'group' | 'granular';
+  selectionMode?: 'group' | 'granular' | undefined;
   overrideExisting: boolean;
   setupGitHooks: boolean;
   skipValidation: boolean;

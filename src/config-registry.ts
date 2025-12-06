@@ -12,22 +12,22 @@ export interface ConfigMetadata {
   description: string;
   /** Config group this belongs to */
   group: ConfigGroup;
-  /** File path relative to project root */
-  filePath: string;
+  /** File path relative to project root (can be dynamic based on context) */
+  filePath: string | ((context: TemplateContext) => string);
   /** Template content or generator function */
   template: string | ((context: TemplateContext) => string);
   /** Whether this is a JSON file */
-  isJson?: boolean;
+  isJson?: boolean | undefined;
   /** Dependencies - other configs that must be selected with this one */
-  dependencies?: ConfigFile[];
+  dependencies?: ConfigFile[] | undefined;
   /** Conflicts - configs that cannot be selected together */
-  conflicts?: ConfigFile[];
+  conflicts?: ConfigFile[] | undefined;
   /** Conditions for when this config should be available */
-  condition?: (context: TemplateContext) => boolean;
+  condition?: ((context: TemplateContext) => boolean) | undefined;
   /** Whether this should be enabled by default for its group */
-  defaultEnabled?: boolean;
+  defaultEnabled?: boolean | undefined;
   /** Priority order within group (higher = shown first) */
-  priority?: number;
+  priority?: number | undefined;
 }
 
 /**
@@ -131,7 +131,13 @@ indent_style = tab
     defaultEnabled: true,
     priority: 100,
     condition: (ctx) => ctx.testFramework === TestFramework.Vitest,
-    conflicts: [ConfigFile.Jest, ConfigFile.Mocha, ConfigFile.Jasmine, ConfigFile.Ava, ConfigFile.Tape],
+    conflicts: [
+      ConfigFile.Jest,
+      ConfigFile.Mocha,
+      ConfigFile.Jasmine,
+      ConfigFile.Ava,
+      ConfigFile.Tape,
+    ],
     template: `import baseConfig from '@kitiumai/config/vitest.config.base.js';
 import { defineConfig } from 'vitest/config';
 
@@ -150,7 +156,13 @@ export default defineConfig({
     defaultEnabled: false,
     priority: 90,
     condition: (ctx) => ctx.testFramework === TestFramework.Jest,
-    conflicts: [ConfigFile.Vitest, ConfigFile.Mocha, ConfigFile.Jasmine, ConfigFile.Ava, ConfigFile.Tape],
+    conflicts: [
+      ConfigFile.Vitest,
+      ConfigFile.Mocha,
+      ConfigFile.Jasmine,
+      ConfigFile.Ava,
+      ConfigFile.Tape,
+    ],
     template: `const config = require('@kitiumai/config/jest.config.base.cjs');
 
 module.exports = {
@@ -168,7 +180,13 @@ module.exports = {
     defaultEnabled: false,
     priority: 80,
     condition: (ctx) => ctx.testFramework === TestFramework.Mocha,
-    conflicts: [ConfigFile.Vitest, ConfigFile.Jest, ConfigFile.Jasmine, ConfigFile.Ava, ConfigFile.Tape],
+    conflicts: [
+      ConfigFile.Vitest,
+      ConfigFile.Jest,
+      ConfigFile.Jasmine,
+      ConfigFile.Ava,
+      ConfigFile.Tape,
+    ],
     template: `--require ts-node/register
 --require source-map-support/register
 --recursive
@@ -186,11 +204,17 @@ src/**/*.spec.ts\n`,
     defaultEnabled: false,
     priority: 70,
     condition: (ctx) => ctx.testFramework === TestFramework.Jasmine,
-    conflicts: [ConfigFile.Vitest, ConfigFile.Jest, ConfigFile.Mocha, ConfigFile.Ava, ConfigFile.Tape],
+    conflicts: [
+      ConfigFile.Vitest,
+      ConfigFile.Jest,
+      ConfigFile.Mocha,
+      ConfigFile.Ava,
+      ConfigFile.Tape,
+    ],
     template: JSON.stringify(
       {
-        spec_dir: 'src',
-        spec_files: ['**/*.spec.ts'],
+        ['spec_dir']: 'src',
+        ['spec_files']: ['**/*.spec.ts'],
         helpers: ['helpers/**/*.ts'],
         stopSpecOnExpectationFailure: false,
         random: false,
@@ -209,7 +233,13 @@ src/**/*.spec.ts\n`,
     defaultEnabled: false,
     priority: 60,
     condition: (ctx) => ctx.testFramework === TestFramework.Ava,
-    conflicts: [ConfigFile.Vitest, ConfigFile.Jest, ConfigFile.Mocha, ConfigFile.Jasmine, ConfigFile.Tape],
+    conflicts: [
+      ConfigFile.Vitest,
+      ConfigFile.Jest,
+      ConfigFile.Mocha,
+      ConfigFile.Jasmine,
+      ConfigFile.Tape,
+    ],
     template: `export default {
   files: ['src/**/*.spec.ts'],
   extensions: {
@@ -228,7 +258,13 @@ src/**/*.spec.ts\n`,
     defaultEnabled: false,
     priority: 50,
     condition: (ctx) => ctx.testFramework === TestFramework.Tape,
-    conflicts: [ConfigFile.Vitest, ConfigFile.Jest, ConfigFile.Mocha, ConfigFile.Jasmine, ConfigFile.Ava],
+    conflicts: [
+      ConfigFile.Vitest,
+      ConfigFile.Jest,
+      ConfigFile.Mocha,
+      ConfigFile.Jasmine,
+      ConfigFile.Ava,
+    ],
     template: `module.exports = {
   files: ['src/**/*.spec.ts'],
 };\n`,
@@ -798,16 +834,16 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global --add safe.directory \$GITHUB_WORKSPACE
+          git config --global --add safe.directory $GITHUB_WORKSPACE
 
       - name: Environment health check
         run: |
           echo "📋 Environment diagnostics:"
-          echo "Node: \$(node --version)"
-          echo "NPM: \$(npm --version)"
-          echo "Git: \$(git --version)"
-          echo "Working directory: \$(pwd)"
-          echo "User: \$(whoami)"
+          echo "Node: $(node --version)"
+          echo "NPM: $(npm --version)"
+          echo "Git: $(git --version)"
+          echo "Working directory: $(pwd)"
+          echo "User: $(whoami)"
 
       - name: Ensure pnpm available (corepack fallback)
         run: |
@@ -825,15 +861,15 @@ jobs:
           else
             TAG_NAME="\${{ inputs.tag }}"
           fi
-          echo "tag=\${TAG_NAME}" >> "\$GITHUB_OUTPUT"
-          echo "Processing tag: \$TAG_NAME"
+          echo "tag=\${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          echo "Processing tag: $TAG_NAME"
 
       - name: Extract version from tag
         id: version
         run: |
-          VERSION=\$(echo "\${{ steps.tag.outputs.tag }}" | sed 's/^v//')
-          echo "version=\${VERSION}" >> "\$GITHUB_OUTPUT"
-          echo "Extracted version: \$VERSION"
+          VERSION=$(echo "\${{ steps.tag.outputs.tag }}" | sed 's/^v//')
+          echo "version=\${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Extracted version: $VERSION"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline --ignore-scripts
@@ -856,21 +892,21 @@ jobs:
 
       - name: Update package version
         run: |
-          CURRENT_VERSION=\$(node -p "require('./package.json').version")
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
           TARGET_VERSION="\${{ steps.version.outputs.version }}"
 
-          if [ "\$CURRENT_VERSION" = "\$TARGET_VERSION" ]; then
-            echo "ℹ️ Version already set to \$TARGET_VERSION, skipping npm version"
+          if [ "$CURRENT_VERSION" = "$TARGET_VERSION" ]; then
+            echo "ℹ️ Version already set to $TARGET_VERSION, skipping npm version"
           else
-            echo "📦 Updating package.json version from \$CURRENT_VERSION to \$TARGET_VERSION"
-            npm version "\$TARGET_VERSION" --no-git-tag-version
+            echo "📦 Updating package.json version from $CURRENT_VERSION to $TARGET_VERSION"
+            npm version "$TARGET_VERSION" --no-git-tag-version
           fi
 
       - name: Configure npm for trusted publishing
         env:
           NPM_TOKEN: \${{ secrets.NPM_TOKEN }}
         run: |
-          if [ -z "\$NPM_TOKEN" ]; then
+          if [ -z "$NPM_TOKEN" ]; then
             echo "❌ NPM_TOKEN is required for publishing"
             exit 1
           fi
@@ -886,10 +922,10 @@ jobs:
           PACKAGE_NAME="${ctx.packageName}"
 
           if npm view "\${PACKAGE_NAME}@\${VERSION}" version 2>/dev/null; then
-            echo "already_published=true" >> "\$GITHUB_OUTPUT"
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
             echo "⏭️  Version \${VERSION} already published to npm, skipping publish step"
           else
-            echo "already_published=false" >> "\$GITHUB_OUTPUT"
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
             echo "📦 Version \${VERSION} not found on npm, proceeding with publish"
           fi
 
@@ -1001,16 +1037,16 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global --add safe.directory \$GITHUB_WORKSPACE
+          git config --global --add safe.directory $GITHUB_WORKSPACE
 
       - name: Environment health check
         run: |
           echo "📋 Environment diagnostics:"
-          echo "Node: \$(node --version)"
-          echo "NPM: \$(npm --version)"
-          echo "Git: \$(git --version)"
-          echo "Working directory: \$(pwd)"
-          echo "User: \$(whoami)"
+          echo "Node: $(node --version)"
+          echo "NPM: $(npm --version)"
+          echo "Git: $(git --version)"
+          echo "Working directory: $(pwd)"
+          echo "User: $(whoami)"
 
       - name: Ensure pnpm available (corepack fallback)
         run: |
@@ -1023,24 +1059,24 @@ jobs:
       - name: Validate version format
         run: |
           VERSION="\${{ inputs.version }}"
-          if [[ ! \$VERSION =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
-            echo "❌ Invalid version format: \$VERSION"
+          if [[ ! $VERSION =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
             echo "Version must be in format: x.y.z (e.g., 1.0.0, 2.1.3)"
             exit 1
           fi
-          echo "✅ Valid version format: \$VERSION"
+          echo "✅ Valid version format: $VERSION"
 
       - name: Check if tag already exists
         id: check_tag
         run: |
           TAG="v\${{ inputs.version }}"
-          if git tag -l | grep -q "^\$TAG\$"; then
-            echo "❌ Tag \$TAG already exists"
-            echo "exists=true" >> "\$GITHUB_OUTPUT"
+          if git tag -l | grep -q "^$TAG$"; then
+            echo "❌ Tag $TAG already exists"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
             exit 1
           else
-            echo "✅ Tag \$TAG is available"
-            echo "exists=false" >> "\$GITHUB_OUTPUT"
+            echo "✅ Tag $TAG is available"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Install dependencies
@@ -1059,14 +1095,14 @@ jobs:
 
       - name: Update package.json version
         run: |
-          CURRENT_VERSION=\$(node -p "require('./package.json').version")
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
           TARGET_VERSION="\${{ inputs.version }}"
 
-          if [ "\$CURRENT_VERSION" = "\$TARGET_VERSION" ]; then
-            echo "ℹ️ Version already set to \$TARGET_VERSION, skipping npm version"
+          if [ "$CURRENT_VERSION" = "$TARGET_VERSION" ]; then
+            echo "ℹ️ Version already set to $TARGET_VERSION, skipping npm version"
           else
-            echo "📦 Updating package.json version from \$CURRENT_VERSION to \$TARGET_VERSION"
-            npm version "\$TARGET_VERSION" --no-git-tag-version
+            echo "📦 Updating package.json version from $CURRENT_VERSION to $TARGET_VERSION"
+            npm version "$TARGET_VERSION" --no-git-tag-version
           fi
 
       - name: Commit version bump
@@ -1082,15 +1118,15 @@ jobs:
       - name: Create and push tag
         run: |
           TAG="v\${{ inputs.version }}"
-          echo "🏷️  Creating tag: \$TAG"
-          git tag "\$TAG"
-          git push origin "\$TAG"
+          echo "🏷️  Creating tag: $TAG"
+          git tag "$TAG"
+          git push origin "$TAG"
 
       - name: Verify tag creation
         run: |
           TAG="v\${{ inputs.version }}"
-          echo "✅ Tag created successfully: \$TAG"
-          echo "🔗 Tag URL: https://github.com/kitiumai/config/releases/tag/\$TAG"
+          echo "✅ Tag created successfully: $TAG"
+          echo "🔗 Tag URL: https://github.com/kitiumai/config/releases/tag/$TAG"
           echo ""
           echo "The release workflow will now be triggered automatically."
           echo "Monitor the 'Release ${ctx.packageName}' workflow for the publishing status."\n`;
@@ -1115,7 +1151,10 @@ export function getConfigsByGroup(group: ConfigGroup): ConfigMetadata[] {
 /**
  * Get available configurations based on context
  */
-export function getAvailableConfigs(context: TemplateContext, group?: ConfigGroup): ConfigMetadata[] {
+export function getAvailableConfigs(
+  context: TemplateContext,
+  group?: ConfigGroup
+): ConfigMetadata[] {
   let configs = group ? getConfigsByGroup(group) : CONFIG_REGISTRY;
 
   // Filter by conditions
