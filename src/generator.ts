@@ -92,9 +92,57 @@ export class ConfigGenerator {
       testFramework: choices.testFramework,
       enableUiConfigs: choices.enableUiConfigs,
       publicPackage: choices.publicPackage,
-      hasGit: choices.setupGitHooks,
+      hasGit: this.determineGitAvailability(choices),
       year: new Date().getFullYear(),
     };
+  }
+
+  /**
+   * Derive whether git-related assets should be generated
+   */
+  private determineGitAvailability(choices: SetupChoices): boolean {
+    if (choices.setupGitHooks) {
+      return true;
+    }
+
+    if (this.fileOps.fileExists('.git')) {
+      return true;
+    }
+
+    const gitRelatedGroups = new Set<ConfigGroup>([
+      ConfigGroup.Ci,
+      ConfigGroup.Security,
+      ConfigGroup.Governance,
+      ConfigGroup.GitHooks,
+      ConfigGroup.Git,
+    ]);
+
+    if (choices.configGroups.some((group) => gitRelatedGroups.has(group))) {
+      return true;
+    }
+
+    if (choices.selectionMode === 'granular' && choices.selectedConfigFiles) {
+      const gitRelatedConfigs = new Set<ConfigFile>([
+        ConfigFile.GithubCi,
+        ConfigFile.GithubRelease,
+        ConfigFile.GithubTagRelease,
+        ConfigFile.SecurityWorkflow,
+        ConfigFile.Dependabot,
+        ConfigFile.Gitleaks,
+        ConfigFile.Codeowners,
+        ConfigFile.PullRequestTemplate,
+        ConfigFile.IssueTemplateBug,
+        ConfigFile.IssueTemplateFeature,
+        ConfigFile.LintStaged,
+        ConfigFile.Husky,
+        ConfigFile.Gitignore,
+      ]);
+      if (choices.selectedConfigFiles.some((file) => gitRelatedConfigs.has(file))) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
