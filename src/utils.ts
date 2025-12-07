@@ -207,6 +207,7 @@ export class ProgressTracker {
   }
 
   start(message: string): void {
+    this.startTime = Date.now();
     if (process.env['CI'] || !process.stdout.isTTY) {
       console.log(chalk.cyan(`⏳ ${message}...`));
       return;

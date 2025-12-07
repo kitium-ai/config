@@ -122,7 +122,7 @@ async function ensureHuskyInstalled(targetDir: string, dryRun: boolean): Promise
 
     const installCommand =
       packageManager === 'pnpm'
-        ? 'pnpm add -D husky'
+        ? 'pnpm add -D husky --ignore-workspace'
         : packageManager === 'yarn'
           ? 'yarn add -D husky'
           : 'npm install --save-dev husky';

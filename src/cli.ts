@@ -163,6 +163,13 @@ class KitiumConfigCLI {
   }
 
   /**
+   * Show failure message
+   */
+  private showFailure(message: string): void {
+    this.progressTracker.error(message);
+  }
+
+  /**
    * Validate CLI arguments
    */
   private validateArgs(args: string[]): void {
@@ -366,6 +373,7 @@ class KitiumConfigCLI {
       if (githubSecuritySuccess) {
         this.showSuccess('GitHub security configured');
       } else {
+        this.showFailure('GitHub security setup skipped');
         this.logger.debug('GitHub security setup skipped (script not available)');
       }
 
@@ -375,6 +383,7 @@ class KitiumConfigCLI {
       if (branchSecuritySuccess) {
         this.showSuccess('Main branch secured');
       } else {
+        this.showFailure('Main branch security skipped');
         this.logger.debug('Branch security setup skipped (script not available)');
       }
 
@@ -439,17 +448,31 @@ class KitiumConfigCLI {
    */
   private async runGitHubSecuritySetup(repoName: string): Promise<boolean> {
     try {
+      // Check if the setup-github-security command is available
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execPromise = promisify(exec);
+
+      try {
+        await execPromise('pnpm exec setup-github-security --help');
+      } catch {
+        // Command not available, skip silently
+        this.logger.debug('setup-github-security command not available, skipping GitHub security setup');
+        return false;
+      }
+
       const { spawn } = await import('child_process');
-      const process = spawn('pnpm', ['exec', 'setup-github-security', '--repo', repoName], {
-        stdio: 'pipe',
+      const child = spawn('pnpm', ['exec', 'setup-github-security', '--repo', repoName], {
+        stdio: 'inherit',
         shell: true,
+        env: process.env,
       });
 
       return await new Promise((resolve) => {
-        process.on('close', (code) => {
+        child.on('close', (code) => {
           resolve(code === 0);
         });
-        process.on('error', () => {
+        child.on('error', () => {
           resolve(false);
         });
       });
@@ -467,16 +490,17 @@ class KitiumConfigCLI {
   private async runBranchSecuritySetup(repoName: string): Promise<boolean> {
     try {
       const { spawn } = await import('child_process');
-      const process = spawn('pnpm', ['-w', 'run', 'secure:main', '--repo', repoName], {
-        stdio: 'pipe',
+      const child = spawn('pnpm', ['-w', 'run', 'secure:main', '--repo', repoName], {
+        stdio: 'inherit',
         shell: true,
+        env: process.env,
       });
 
       return await new Promise((resolve) => {
-        process.on('close', (code) => {
+        child.on('close', (code) => {
           resolve(code === 0);
         });
-        process.on('error', () => {
+        child.on('error', () => {
           resolve(false);
         });
       });
