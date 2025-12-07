@@ -457,7 +457,9 @@ class KitiumConfigCLI {
         await execPromise('pnpm exec setup-github-security --help');
       } catch {
         // Command not available, skip silently
-        this.logger.debug('setup-github-security command not available, skipping GitHub security setup');
+        this.logger.debug(
+          'setup-github-security command not available, skipping GitHub security setup'
+        );
         return false;
       }
 
