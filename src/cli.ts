@@ -345,10 +345,14 @@ class KitiumConfigCLI {
     try {
       // Get repository info
       const repoName = await this.getRepositoryName();
-      
+
       if (!repoName) {
         this.logger.warn('Could not determine repository name for GitHub security setup');
-        process.stdout.write(chalk.yellow('\n⚠️  Skipping GitHub security setup: Unable to determine repository name\n'));
+        process.stdout.write(
+          chalk.yellow(
+            '\n⚠️  Skipping GitHub security setup: Unable to determine repository name\n'
+          )
+        );
         process.stdout.write(chalk.dim('  To setup manually, run:\n'));
         process.stdout.write(chalk.dim('    pnpm -w run secure:main --repo <owner/repo>\n'));
         return;
@@ -377,7 +381,7 @@ class KitiumConfigCLI {
       if (githubSecuritySuccess || branchSecuritySuccess) {
         process.stdout.write(chalk.green('\n✅ GitHub security setup complete!\n'));
       }
-      
+
       this.logger.info('GitHub security setup completed', {
         repoName,
         packageName,
@@ -388,7 +392,9 @@ class KitiumConfigCLI {
         error instanceof Error ? error : new Error(String(error))
       );
       process.stdout.write(chalk.yellow('\n⚠️  GitHub security setup encountered issues\n'));
-      process.stdout.write(chalk.dim('  This may require GitHub API token or manual configuration\n'));
+      process.stdout.write(
+        chalk.dim('  This may require GitHub API token or manual configuration\n')
+      );
       process.stdout.write(chalk.dim('  To setup manually, run:\n'));
       process.stdout.write(chalk.dim('    pnpm -w run secure:main --repo <owner/repo>\n'));
     }
@@ -409,7 +415,9 @@ class KitiumConfigCLI {
         const url = stdout.trim();
 
         // Parse repo name from git URL (e.g., git@github.com:owner/repo.git or https://github.com/owner/repo.git)
-        const match = url.match(/(?:git@github\.com:|https:\/\/github\.com\/)([^/]+)\/([^/\.]+)(?:\.git)?$/);
+        const match = url.match(
+          /(?:git@github\.com:|https:\/\/github\.com\/)([^/]+)\/([^/.]+)(?:\.git)?$/
+        );
         if (match && match[1] && match[2]) {
           return `${match[1]}/${match[2]}`;
         }

@@ -12,6 +12,7 @@ A revolutionary CLI tool and configuration library that transforms how developme
 ### The Problem with Traditional Config Management
 
 Most configuration packages suffer from:
+
 - **Static configs** that don't adapt to project needs
 - **Manual setup** requiring deep knowledge of each tool
 - **Inconsistent configurations** across team members
@@ -21,6 +22,7 @@ Most configuration packages suffer from:
 ### Our Intelligent Solution
 
 `@kitiumai/config` revolutionizes config management with:
+
 - **🧠 Auto-detection** of project type, existing configs, and needs
 - **🎯 Interactive CLI** with smart recommendations
 - **⚡ One-command setup** with `--auto` flag
@@ -31,12 +33,14 @@ Most configuration packages suffer from:
 ## 🎯 Key Features
 
 ### Intelligent Auto-Detection
+
 - Detects package type (Library, App, Next.js, CLI, Monorepo)
 - Analyzes existing configurations
 - Suggests optimal config combinations
 - Adapts to your project's specific needs
 
 ### Revolutionary CLI Experience
+
 - **Interactive mode** with guided setup
 - **Auto mode** for zero-touch configuration
 - **Granular mode** for precise control
@@ -44,6 +48,7 @@ Most configuration packages suffer from:
 - **Force override** when needed
 
 ### Comprehensive Configuration Coverage
+
 - **Core**: TypeScript, ESLint, Prettier
 - **Testing**: Vitest, Jest, Playwright, Mocha, Jasmine, AVA, Tape
 - **Documentation**: TypeDoc, Storybook
@@ -55,6 +60,7 @@ Most configuration packages suffer from:
 - **Editor**: EditorConfig
 
 ### Built-in Security Integration
+
 - **Automatic GitHub security setup** in `--auto` mode
 - **Branch protection rules** via integrated scripts
 - **Security scanning workflows**
@@ -62,61 +68,73 @@ Most configuration packages suffer from:
 
 ## 📊 Comparison with Competitors
 
-| Feature | @kitiumai/config | create-react-app | @typescript-eslint/recommended | prettier-config-standard |
-|---------|------------------|------------------|-------------------------------|---------------------------|
-| **Auto-detection** | ✅ Intelligent | ❌ None | ❌ None | ❌ None |
-| **Interactive CLI** | ✅ Full-featured | ❌ None | ❌ None | ❌ None |
-| **One-command setup** | ✅ `--auto` flag | ❌ None | ❌ None | ❌ None |
-| **Security integration** | ✅ GitHub security | ❌ None | ❌ None | ❌ None |
-| **Git integration** | ✅ Husky + hooks | ❌ None | ❌ None | ❌ None |
-| **CI/CD setup** | ✅ GitHub Actions | ❌ None | ❌ None | ❌ None |
-| **Granular control** | ✅ File-level | ❌ None | ❌ None | ❌ None |
-| **Registry system** | ✅ Maintainable | ❌ Static | ❌ Static | ❌ Static |
-| **Monorepo support** | ✅ Full | ❌ None | ❌ None | ❌ None |
-| **TypeScript support** | ✅ Advanced | ✅ Basic | ✅ Advanced | ❌ None |
+| Feature                  | @kitiumai/config   | create-react-app | @typescript-eslint/recommended | prettier-config-standard |
+| ------------------------ | ------------------ | ---------------- | ------------------------------ | ------------------------ |
+| **Auto-detection**       | ✅ Intelligent     | ❌ None          | ❌ None                        | ❌ None                  |
+| **Interactive CLI**      | ✅ Full-featured   | ❌ None          | ❌ None                        | ❌ None                  |
+| **One-command setup**    | ✅ `--auto` flag   | ❌ None          | ❌ None                        | ❌ None                  |
+| **Security integration** | ✅ GitHub security | ❌ None          | ❌ None                        | ❌ None                  |
+| **Git integration**      | ✅ Husky + hooks   | ❌ None          | ❌ None                        | ❌ None                  |
+| **CI/CD setup**          | ✅ GitHub Actions  | ❌ None          | ❌ None                        | ❌ None                  |
+| **Granular control**     | ✅ File-level      | ❌ None          | ❌ None                        | ❌ None                  |
+| **Registry system**      | ✅ Maintainable    | ❌ Static        | ❌ Static                      | ❌ Static                |
+| **Monorepo support**     | ✅ Full            | ❌ None          | ❌ None                        | ❌ None                  |
+| **TypeScript support**   | ✅ Advanced        | ✅ Basic         | ✅ Advanced                    | ❌ None                  |
 
 ## 🏆 Unique Selling Proposition (USP)
 
 ### 1. **Intelligent Project Analysis**
+
 Unlike static config packages, `@kitiumai/config` analyzes your project and recommends the perfect configuration stack.
 
 ### 2. **Zero-Touch Auto Mode**
+
 The `--auto` flag provides complete setup with security integration - no manual configuration needed.
 
 ### 3. **Registry-Driven Architecture**
+
 Our innovative registry system makes adding new configurations trivial and maintains consistency across all projects.
 
 ### 4. **Security-First Approach**
+
 Built-in GitHub security setup and branch protection - security is not an afterthought.
 
 ### 5. **Developer Experience Excellence**
+
 From interactive prompts to comprehensive error handling, every interaction is designed for developer productivity.
 
 ## 🚀 Quick Start
 
 ### Install
+
 ```bash
 pnpm add -D @kitiumai/config
 ```
 
 ### Interactive Setup (Recommended)
+
 ```bash
 npx kitiumai-config
 ```
-*Follow the guided prompts for your perfect setup*
+
+_Follow the guided prompts for your perfect setup_
 
 ### One-Command Auto Setup (Zero Touch)
+
 ```bash
 npx kitiumai-config --auto
 ```
-*Automatically detects and configures everything, including GitHub security!*
+
+_Automatically detects and configures everything, including GitHub security!_
 
 ### Preview Changes
+
 ```bash
 npx kitiumai-config --auto --dry-run
 ```
 
 ### Force Override Existing Files
+
 ```bash
 npx kitiumai-config --auto --force
 ```
@@ -124,60 +142,66 @@ npx kitiumai-config --auto --force
 ## 📖 CLI Reference
 
 ### Command Syntax
+
 ```bash
 kitiumai-config [options] [target-dir]
 ```
 
 ### Core Options
 
-| Option | Description |
-|--------|-------------|
-| `--auto` | Non-interactive mode with intelligent defaults |
-| `--dry-run` | Preview changes without applying them |
-| `--force` | Override existing files without prompting |
-| `--public` | Configure for public package publishing |
-| `--ui` | Include UI tooling (Playwright, Storybook) |
-| `--granular` | Enable granular file selection mode |
-| `--help, -h` | Show help message |
+| Option       | Description                                    |
+| ------------ | ---------------------------------------------- |
+| `--auto`     | Non-interactive mode with intelligent defaults |
+| `--dry-run`  | Preview changes without applying them          |
+| `--force`    | Override existing files without prompting      |
+| `--public`   | Configure for public package publishing        |
+| `--ui`       | Include UI tooling (Playwright, Storybook)     |
+| `--granular` | Enable granular file selection mode            |
+| `--help, -h` | Show help message                              |
 
 ### Test Framework Options
 
-| Option | Description |
-|--------|-------------|
-| `--vitest` | Use Vitest for testing (default) |
-| `--jest` | Use Jest for testing |
-| `--mocha` | Use Mocha for testing |
-| `--jasmine` | Use Jasmine for testing |
-| `--ava` | Use AVA for testing |
-| `--tape` | Use Tape for testing |
+| Option      | Description                      |
+| ----------- | -------------------------------- |
+| `--vitest`  | Use Vitest for testing (default) |
+| `--jest`    | Use Jest for testing             |
+| `--mocha`   | Use Mocha for testing            |
+| `--jasmine` | Use Jasmine for testing          |
+| `--ava`     | Use AVA for testing              |
+| `--tape`    | Use Tape for testing             |
 
 ## 🎯 Auto Mode Features
 
 When using `--auto` or `--force` flags, the setup automatically:
 
 ### Core Configuration
+
 - **TypeScript**: Strict configuration with modern settings
 - **ESLint**: Comprehensive linting with security rules
 - **Prettier**: Consistent code formatting
 
 ### Testing & Quality
+
 - **Vitest**: Fast, modern test runner (default)
 - **Coverage**: Built-in coverage reporting
 - **Linting**: Pre-commit hooks with lint-staged
 
 ### CI/CD Pipeline
+
 - **GitHub Actions**: Complete CI/CD workflows
 - **Matrix builds**: Multi-Node.js version testing
 - **Security scanning**: Automated vulnerability checks
 - **Release automation**: Semantic versioning
 
 ### Security & Compliance
+
 - **GitHub Security**: Automatic security settings configuration
 - **Branch Protection**: Main branch protection rules
 - **Dependabot**: Automated dependency updates
 - **Secret scanning**: Gitleaks integration
 
 ### Git & Development Workflow
+
 - **Git Hooks**: Husky with pre-commit linting
 - **GitIgnore**: Comprehensive Node.js exclusions
 - **Commit Messages**: Conventional commit enforcement
@@ -186,6 +210,7 @@ When using `--auto` or `--force` flags, the setup automatically:
 ## 🔧 Configuration Files API
 
 ### TypeScript Configuration
+
 ```json
 {
   "extends": "@kitiumai/config/tsconfig.base.json",
@@ -199,6 +224,7 @@ When using `--auto` or `--force` flags, the setup automatically:
 ```
 
 ### ESLint Configuration
+
 ```javascript
 import config from '@kitiumai/config/eslint.config.base.js';
 
@@ -209,11 +235,13 @@ export default [
 ```
 
 ### Prettier Configuration
+
 ```javascript
 module.exports = require('@kitiumai/config/prettier.config.cjs');
 ```
 
 ### Testing Configuration
+
 ```javascript
 // vitest.config.ts
 import { defineConfig } from 'vitest/config';
@@ -230,6 +258,7 @@ export default defineConfig({
 ### CLI Classes (Programmatic Usage)
 
 #### `ConfigDetector`
+
 Auto-detects project configuration needs.
 
 ```typescript
@@ -241,6 +270,7 @@ const result = await detector.detect();
 ```
 
 #### `ConfigPrompter`
+
 Interactive configuration prompts.
 
 ```typescript
@@ -252,6 +282,7 @@ const choices = await prompter.prompt();
 ```
 
 #### `ConfigGenerator`
+
 Generates configuration files.
 
 ```typescript
@@ -280,18 +311,20 @@ import type {
   DetectionResult,
   SetupChoices,
   CliOptions,
-  SetupResult
+  SetupResult,
 } from '@kitiumai/config';
 ```
 
 ## 🎨 Configuration Categories
 
 ### Core Development Tools
+
 - **TypeScript**: Strict, modern configuration
 - **ESLint**: Comprehensive rules with security plugins
 - **Prettier**: Opinionated formatting standards
 
 ### Testing Frameworks
+
 - **Vitest**: Modern, fast test runner (recommended)
 - **Jest**: Popular framework with full feature set
 - **Playwright**: End-to-end testing for web apps
@@ -301,26 +334,31 @@ import type {
 - **Tape**: Minimalist test framework
 
 ### Documentation & UI
+
 - **TypeDoc**: API documentation generation
 - **Storybook**: Component development environment
 
 ### Release Management
+
 - **CommitLint**: Conventional commit enforcement
 - **Semantic Release**: Automated versioning
 - **Changesets**: Manual versioning control
 
 ### Security & Compliance
+
 - **ESLint Security**: Security-focused linting rules
 - **Gitleaks**: Secret scanning configuration
 - **Dependabot**: Automated dependency updates
 - **GitHub Security**: Repository security settings
 
 ### CI/CD & Automation
+
 - **GitHub Actions**: Complete CI/CD pipelines
 - **Git Hooks**: Pre-commit quality checks
 - **Lint-staged**: Selective linting on changed files
 
 ### Governance & Collaboration
+
 - **CODEOWNERS**: Code ownership definitions
 - **PR Templates**: Standardized pull request format
 - **Issue Templates**: Structured issue reporting
@@ -328,6 +366,7 @@ import type {
 ## 🔒 Security Integration
 
 ### Automatic GitHub Security Setup
+
 When using `--auto` mode in a Git repository:
 
 1. **Repository Analysis**: Detects GitHub remote URL
@@ -336,6 +375,7 @@ When using `--auto` mode in a Git repository:
 4. **Error Handling**: Graceful fallback if scripts unavailable
 
 ### Manual Security Setup
+
 ```bash
 # Setup GitHub security manually
 pnpm exec setup-github-security --repo owner/repo
@@ -347,6 +387,7 @@ pnpm -w run secure:main --repo owner/repo
 ## 🏗️ Architecture
 
 ### Registry-Driven Design
+
 ```typescript
 // Configuration registry enables easy extension
 export const CONFIG_REGISTRY: ConfigMetadata[] = [
@@ -364,12 +405,14 @@ export const CONFIG_REGISTRY: ConfigMetadata[] = [
 ```
 
 ### Smart File Operations
+
 - **Conflict Detection**: Warns about existing files
 - **Intelligent Merging**: Safely updates package.json
 - **Dry-run Support**: Preview all changes
 - **Rollback Safety**: Non-destructive by default
 
 ### Cross-Platform Compatibility
+
 - **Windows Support**: PowerShell and cmd compatibility
 - **macOS/Linux**: Native shell support
 - **Git Integration**: Works with any Git setup
@@ -378,6 +421,7 @@ export const CONFIG_REGISTRY: ConfigMetadata[] = [
 ## 📈 Advanced Usage Examples
 
 ### Custom Project Setup
+
 ```bash
 # Library with security and CI
 npx kitiumai-config --auto --public
@@ -390,33 +434,34 @@ npx kitiumai-config --granular  # Select only what you need
 ```
 
 ### Programmatic Usage
+
 ```typescript
-import {
-  ConfigDetector,
-  ConfigGenerator,
-  ConfigGroup
-} from '@kitiumai/config';
+import { ConfigDetector, ConfigGenerator, ConfigGroup } from '@kitiumai/config';
 
 async function setupProject(projectPath: string) {
   const detector = new ConfigDetector(projectPath);
   const detection = await detector.detect();
 
   const generator = new ConfigGenerator(projectPath);
-  await generator.generate({
-    packageType: detection.type,
-    configGroups: [ConfigGroup.Core, ConfigGroup.Testing],
-    overrideExisting: false,
-    setupGitHooks: detection.hasGit,
-    skipValidation: false,
-    dryRun: false,
-    publicPackage: false,
-    enableUiConfigs: false,
-    testFramework: 'vitest'
-  }, false);
+  await generator.generate(
+    {
+      packageType: detection.type,
+      configGroups: [ConfigGroup.Core, ConfigGroup.Testing],
+      overrideExisting: false,
+      setupGitHooks: detection.hasGit,
+      skipValidation: false,
+      dryRun: false,
+      publicPackage: false,
+      enableUiConfigs: false,
+      testFramework: 'vitest',
+    },
+    false
+  );
 }
 ```
 
 ### CI/CD Integration
+
 ```yaml
 # .github/workflows/setup.yml
 name: Setup
@@ -437,6 +482,7 @@ jobs:
 ## 🤝 Contributing
 
 ### Development Setup
+
 ```bash
 git clone https://github.com/kitium-ai/config.git
 cd config
@@ -445,12 +491,14 @@ pnpm run build
 ```
 
 ### Adding New Configurations
+
 1. Add config metadata to `CONFIG_REGISTRY`
 2. Create template file
 3. Update exports in `package.json`
 4. Test with CLI
 
 ### Testing
+
 ```bash
 # Run tests
 pnpm test
@@ -466,7 +514,8 @@ MIT © [KitiumAI](https://github.com/kitium-ai)
 ## 🙏 Acknowledgments
 
 Built with ❤️ for the developer community. Special thanks to the teams behind TypeScript, ESLint, Prettier, and all the amazing open-source tools this package integrates.
-```
+
+````
 
 ## NEW: Granular File Selection
 
@@ -481,14 +530,16 @@ The CLI now supports **granular file selection mode**, giving you fine-grained c
 **Interactive Mode:**
 ```bash
 kitiumai-config --granular
-```
+````
 
 You'll be prompted to:
+
 1. Choose between **Group Mode** (quick) or **Granular Mode** (advanced)
 2. Select individual config files organized by category
 3. See descriptions and recommendations for each file
 
 **Example Interactive Flow:**
+
 ```
 How would you like to select configurations?
   📦 By Groups (Quick - recommended for most users)
@@ -554,12 +605,14 @@ Package manifests are automatically synced with scripts from `package.template.j
 The CLI now includes **automated Git configuration** in `--auto` mode:
 
 ### .gitignore Generation
+
 - **Comprehensive defaults** for Node.js projects
 - Covers: dependencies, build outputs, test coverage, environment files, IDE files, OS files
 - Includes: TypeScript build info, cache directories, logs, and temporary files
 - **Auto-included** in `--auto` mode for git repositories
 
 ### Husky Automated Setup
+
 - **Automatic installation**: CLI will install husky package if not present
 - **Hook configuration**: Creates `.husky/pre-commit` hook with lint-staged integration
 - **Git config**: Automatically sets `core.hooksPath` to `.husky`
@@ -567,6 +620,7 @@ The CLI now includes **automated Git configuration** in `--auto` mode:
 - **Zero manual steps**: No need to run `npx husky install` or configure manually
 
 **What gets created:**
+
 ```
 .husky/
 ├── _/
@@ -701,6 +755,7 @@ export const CONFIG_REGISTRY: ConfigMetadata[] = [
 ```
 
 **Benefits**:
+
 - **DRY (Don't Repeat Yourself)**: Single source of truth for all configs
 - **Easy to extend**: Add new configs by adding metadata entries
 - **Type-safe**: Full TypeScript support with interfaces
@@ -718,7 +773,7 @@ const fileOps = new FileOperations(targetDir);
 // Smart file writing with conflict handling
 const result = fileOps.writeFile(path, content, {
   overrideExisting: true,
-  dryRun: false
+  dryRun: false,
 });
 
 // Intelligent package.json merging
@@ -726,6 +781,7 @@ fileOps.updatePackageJson({ scripts: newScripts }, options);
 ```
 
 **Benefits**:
+
 - **Reusable**: Common operations extracted once
 - **Consistent**: Same behavior across all file operations
 - **Safer**: Built-in checks for file existence and conflicts
@@ -740,6 +796,7 @@ fileOps.updatePackageJson({ scripts: newScripts }, options);
 - **After**: Registry lookup + template resolution (~400 lines)
 
 **Key Improvements**:
+
 - Uses `CONFIG_REGISTRY` for all templates
 - Supports both group-based and granular selection
 - Cleaner separation of concerns
@@ -760,6 +817,7 @@ const files = await promptGranularFileSelection(packageType);
 ```
 
 **Benefits**:
+
 - **Flexible**: Supports both quick (group) and precise (granular) modes
 - **Organized**: Configs grouped by category with descriptions
 - **Smart defaults**: Recommends configs based on project type
@@ -767,13 +825,13 @@ const files = await promptGranularFileSelection(packageType);
 
 ### Code Quality Metrics
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Template methods | 23+ | 0 (registry-based) | ✅ 100% reduction |
-| Switch statement lines | 200+ | ~20 | ✅ 90% reduction |
-| Code duplication | High | Minimal | ✅ Significant |
-| Maintainability | Medium | High | ✅ Much easier |
-| User control | Group-only | Group + Granular | ✅ Enhanced |
+| Metric                 | Before     | After              | Improvement       |
+| ---------------------- | ---------- | ------------------ | ----------------- |
+| Template methods       | 23+        | 0 (registry-based) | ✅ 100% reduction |
+| Switch statement lines | 200+       | ~20                | ✅ 90% reduction  |
+| Code duplication       | High       | Minimal            | ✅ Significant    |
+| Maintainability        | Medium     | High               | ✅ Much easier    |
+| User control           | Group-only | Group + Granular   | ✅ Enhanced       |
 
 ### Backward Compatibility
 
