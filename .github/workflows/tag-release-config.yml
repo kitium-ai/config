@@ -130,33 +130,23 @@ jobs:
           if git diff --quiet "$PKG_PATH"; then
             echo "ℹ️ No changes to commit"
           else
-            BRANCH_NAME="chore/version-bump-${{ inputs.version }}"
-            git checkout -b "$BRANCH_NAME"
             git add "$PKG_PATH"
             git commit -m "chore: bump @kitiumai/config to v${{ inputs.version }}"
-            git push origin "$BRANCH_NAME"
-
-            echo "Creating pull request..."
-            gh pr create \
-              --title "chore: bump @kitiumai/config to v${{ inputs.version }}" \
-              --body "Automated version bump for release v${{ inputs.version }}. Once merged, the tag and release will be created." \
-              --base main \
-              --head "$BRANCH_NAME"
+            git push origin main
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Instructions for completing the release
+      - name: Create and push tag
         run: |
-          echo "📋 Release Process:"
+          TAG="v${{ inputs.version }}"
+          echo "🏷️  Creating tag: $TAG"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Verify tag creation
+        run: |
+          TAG="v${{ inputs.version }}"
+          echo "✅ Tag created successfully: $TAG"
+          echo "🔗 Tag URL: https://github.com/kitiumai/config/releases/tag/$TAG"
           echo ""
-          echo "1️⃣  A pull request has been created for the version bump"
-          echo "2️⃣  Please review and merge the PR at:"
-          echo "     https://github.com/kitium-ai/config/pulls"
-          echo ""
-          echo "3️⃣  After merging, create the release tag using:"
-          echo "     git tag v${{ inputs.version }}"
-          echo "     git push origin v${{ inputs.version }}"
-          echo ""
-          echo "4️⃣  This will trigger the 'Release @kitiumai/config' workflow"
-          echo "     which will automatically publish to npm"
+          echo "The release workflow will now be triggered automatically."
+          echo "Monitor the 'Release @kitiumai/config' workflow for the publishing status."
