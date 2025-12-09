@@ -72,6 +72,271 @@ export const CONFIG_REGISTRY: ConfigMetadata[] = [
   },
 
   {
+    id: ConfigFile.CodeqlConfig,
+    displayName: 'CodeQL Config',
+    description: 'Shared CodeQL query configuration',
+    group: ConfigGroup.Security,
+    filePath: '.github/codeql-config.yml',
+    defaultEnabled: true,
+    priority: 65,
+    condition: (ctx) => ctx.hasGit,
+    template: `# CodeQL Configuration
+disable-default-queries: false
+
+queries:
+  - uses: security-and-quality
+  - uses: security-experimental
+
+paths-ignore:
+  - node_modules
+  - .pnpm-store
+  - dist
+  - build
+  - coverage
+  - .next
+  - .turbo
+  - .changeset\n`,
+  },
+
+  {
+    id: ConfigFile.DependencyReviewConfig,
+    displayName: 'Dependency Review Config',
+    description: 'License and vulnerability thresholds',
+    group: ConfigGroup.Security,
+    filePath: '.github/dependency-review-config.yml',
+    defaultEnabled: true,
+    priority: 64,
+    condition: (ctx) => ctx.hasGit,
+    template: `fail_on_severity: moderate
+allow_licenses:
+  - MIT
+  - Apache-2.0
+  - BSD-2-Clause
+  - BSD-3-Clause
+  - ISC
+  - CC0-1.0
+deny_licenses:
+  - MS-PL
+  - CC-BY-NC
+vulnerability_check: true
+license_check: true\n`,
+  },
+
+  {
+    id: ConfigFile.LabelerConfig,
+    displayName: 'PR Labeler Config',
+    description: 'Labeler rules for automatic PR labels',
+    group: ConfigGroup.Governance,
+    filePath: '.github/labeler.yml',
+    defaultEnabled: true,
+    priority: 55,
+    condition: (ctx) => ctx.hasGit,
+    template: `# PR Labeler Configuration
+version: 2
+
+labels:
+  - label: 'enhancement'
+    sync: true
+    matcher:
+      files: ['packages/**', 'apps/**', 'services/**']
+      title: '/^(feat|feature)/i'
+
+  - label: 'bug'
+    sync: true
+    matcher:
+      title: '/^(fix|bug)/i'
+
+  - label: 'documentation'
+    sync: true
+    matcher:
+      files: ['*.md', 'docs/**', 'README*']
+
+  - label: 'ci'
+    sync: true
+    matcher:
+      files: ['.github/**', 'scripts/**']
+
+  - label: 'security'
+    sync: true
+    matcher:
+      files: ['packages/core/@kitiumai/security/**', 'SECURITY.md']
+
+  - label: 'dependencies'
+    sync: true
+    matcher:
+      files: ['package.json', 'pnpm-lock.yaml']
+
+  - label: 'breaking-change'
+    sync: true
+    matcher:
+      title: '/breaking|major/i'\n`,
+  },
+
+  {
+    id: ConfigFile.PrSizeLabeler,
+    displayName: 'PR Size Labeler',
+    description: 'Custom size buckets for PRs',
+    group: ConfigGroup.Governance,
+    filePath: '.github/pr-size-labeler.yml',
+    defaultEnabled: true,
+    priority: 50,
+    condition: (ctx) => ctx.hasGit,
+    template: `ci:
+  - .github/**
+  - scripts/**
+
+size/xs:
+  - changed-files:
+      - any-glob-to-any-file: ['**/*.{md,txt}', 'docs/**']
+
+size/s:
+  - changed-files:
+      - any-glob-to-any-file: ['**/*.{js,ts,tsx,jsx,json,yml,yaml}']
+
+size/m:
+  - changed-files:
+      - any-glob-to-any-file: ['packages/**', 'apps/**']
+
+size/l:
+  - changed-files:
+      - any-glob-to-any-file: ['services/**', 'products/**']
+
+size/xl:
+  - changed-files:
+      - any-glob-to-any-file: ['**/*']\n`,
+  },
+
+  {
+    id: ConfigFile.IssueTemplateDocs,
+    displayName: 'Docs Issue Template',
+    description: 'Issue template for documentation fixes',
+    group: ConfigGroup.Governance,
+    filePath: '.github/ISSUE_TEMPLATES/documentation.yml',
+    defaultEnabled: true,
+    priority: 65,
+    condition: (ctx) => ctx.hasGit,
+    template: `---
+name: Documentation Issue
+about: Report issues with documentation
+title: "[DOCS] "
+labels: ["documentation", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve our documentation!
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What documentation issue did you find?
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      description: Where is this documentation located?
+      placeholder: "README.md, docs/setup.md, etc."
+    validations:
+      required: true
+
+  - type: textarea
+    id: improvement
+    attributes:
+      label: Suggested Improvement
+      description: How can we improve this documentation?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please verify the following
+      options:
+        - label: I have searched existing documentation issues
+          required: true\n`,
+  },
+
+  {
+    id: ConfigFile.IssueTemplateSecurity,
+    displayName: 'Security Issue Template',
+    description: 'Security vulnerability disclosure template',
+    group: ConfigGroup.Governance,
+    filePath: '.github/ISSUE_TEMPLATES/security_report.yml',
+    defaultEnabled: true,
+    priority: 60,
+    condition: (ctx) => ctx.hasGit,
+    template: `---
+name: Security Vulnerability
+about: Report a security vulnerability
+title: "[SECURITY] "
+labels: ["security", "urgent"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **IMPORTANT:** Please do not report security vulnerabilities through public GitHub issues.
+
+        Instead, please report security vulnerabilities by emailing security@kitiumai.com
+
+        We will investigate all legitimate reports and do our best to quickly fix the problem.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Vulnerability Description
+      description: Please provide a detailed description of the vulnerability.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this vulnerability?
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Potential Impact
+      description: What could an attacker achieve by exploiting this vulnerability?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: How can this vulnerability be reproduced?
+    validations:
+      required: true
+
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Information
+      description: How can we reach you for follow-up questions?
+      placeholder: "email@example.com or GitHub username"
+    validations:
+      required: true\n`,
+  },
+
+  {
     id: ConfigFile.Prettier,
     displayName: 'Prettier Config',
     description: 'Code formatting with Prettier',
@@ -415,6 +680,7 @@ export default [
     defaultEnabled: true,
     priority: 80,
     condition: (ctx) => ctx.hasGit,
+    dependencies: [ConfigFile.GithubSharedWorkflow],
     template: (ctx) => generateSecurityWorkflow(ctx),
   },
 
@@ -433,8 +699,59 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    versioning-strategy: increase
-    open-pull-requests-limit: 10\n`,
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    assignees: []
+    labels: ["deps", "automation"]
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    groups:
+      typescript:
+        patterns:
+          - "typescript"
+          - "@types/*"
+      eslint:
+        patterns:
+          - "eslint*"
+          - "@typescript-eslint/*"
+      testing:
+        patterns:
+          - "jest*"
+          - "@testing-library/*"
+          - "vitest*"
+      build-tools:
+        patterns:
+          - "turbo"
+          - "webpack*"
+          - "rollup*"
+          - "vite*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels: ["ci", "automation"]
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  - package-ecosystem: "docker"
+    directory: "/dev-setup/.devcontainer"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    labels: ["docker", "automation"]
+    commit-message:
+      prefix: "docker"
+      include: "scope"\n`,
   },
 
   {
@@ -453,6 +770,18 @@ save-exact=false\n`,
 
   // ===== CI/CD GROUP =====
   {
+    id: ConfigFile.GithubSharedWorkflow,
+    displayName: 'Shared Workflow Action',
+    description: 'Reusable composite action for shared setup tasks',
+    group: ConfigGroup.Ci,
+    filePath: '.github/actions/kitium-shared-setup/action.yml',
+    defaultEnabled: true,
+    priority: 110,
+    condition: (ctx) => ctx.hasGit,
+    template: () => generateSharedWorkflowAction(),
+  },
+
+  {
     id: ConfigFile.GithubCi,
     displayName: 'CI Workflow',
     description: 'Continuous integration pipeline',
@@ -461,6 +790,7 @@ save-exact=false\n`,
     defaultEnabled: true,
     priority: 100,
     condition: (ctx) => ctx.hasGit,
+    dependencies: [ConfigFile.GithubSharedWorkflow],
     template: (ctx) => generateCiWorkflow(ctx),
   },
 
@@ -473,6 +803,7 @@ save-exact=false\n`,
     defaultEnabled: true,
     priority: 90,
     condition: (ctx) => ctx.hasGit && ctx.publicPackage,
+    dependencies: [ConfigFile.GithubSharedWorkflow],
     template: (ctx) => generateReleaseWorkflow(ctx),
   },
 
@@ -485,7 +816,193 @@ save-exact=false\n`,
     defaultEnabled: true,
     priority: 80,
     condition: (ctx) => ctx.hasGit && ctx.publicPackage,
+    dependencies: [ConfigFile.GithubSharedWorkflow],
     template: (ctx) => generateTagReleaseWorkflow(ctx),
+  },
+
+  {
+    id: ConfigFile.GithubLabelPr,
+    displayName: 'Label PR Workflow',
+    description: 'Automatically label pull requests',
+    group: ConfigGroup.Ci,
+    filePath: '.github/workflows/label-pr.yml',
+    defaultEnabled: true,
+    priority: 70,
+    condition: (ctx) => ctx.hasGit,
+    dependencies: [ConfigFile.LabelerConfig, ConfigFile.PrSizeLabeler],
+    template: `name: Label PR
+
+on:
+  pull_request_target:
+    types: [opened, ready_for_review]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Label PR based on branch
+        uses: actions/labeler@v5
+        with:
+          repo-token: \${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
+
+      - name: Auto-label PR size
+        uses: codacy/git-version@2.7.1
+        with:
+          release-branch: main
+          dev-branch: develop
+
+      - name: Label PR size
+        uses: codelytv/pr-size-labeler@v1
+        with:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          xs_label: 'size/xs'
+          xs_max_size: 10
+          s_label: 'size/s'
+          s_max_size: 100
+          m_label: 'size/m'
+          m_max_size: 500
+          l_label: 'size/l'
+          l_max_size: 1000
+          xl_label: 'size/xl'
+          message_if_xl: |
+            This PR is very large. Consider splitting it into multiple smaller PRs for easier review.\n`,
+  },
+
+  {
+    id: ConfigFile.GithubDependencyReview,
+    displayName: 'Dependency Review Workflow',
+    description: 'Runs GitHub dependency review on PRs',
+    group: ConfigGroup.Ci,
+    filePath: '.github/workflows/dependency-review.yml',
+    defaultEnabled: true,
+    priority: 60,
+    condition: (ctx) => ctx.hasGit,
+    dependencies: [ConfigFile.DependencyReviewConfig],
+    template: `name: Dependency Review
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          config-file: '.github/dependency-review-config.yml'\n`,
+  },
+
+  {
+    id: ConfigFile.GithubWeeklyMaintenance,
+    displayName: 'Weekly Maintenance Workflow',
+    description: 'Security scans and maintenance checks',
+    group: ConfigGroup.Ci,
+    filePath: '.github/workflows/weekly-maintenance.yml',
+    defaultEnabled: true,
+    priority: 50,
+    condition: (ctx) => ctx.hasGit,
+    dependencies: [ConfigFile.GithubSharedWorkflow, ConfigFile.CodeqlConfig],
+    template: `name: Weekly Maintenance
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+jobs:
+  security-maintenance:
+    name: "Security & Maintenance"
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/ashishyd/kitiumai-dev:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Run comprehensive security audit
+        run: pnpm audit --prod --audit-level moderate
+
+      - name: Check for vulnerable dependencies
+        run: |
+          if pnpm audit --prod --json | jq -e '.metadata.vulnerabilities.high > 0 or .metadata.vulnerabilities.critical > 0'; then
+            echo "🚨 High or critical vulnerabilities found!"
+            pnpm audit --prod
+            exit 1
+          else
+            echo "✅ No high or critical vulnerabilities found"
+          fi
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Dependency license check
+        run: |
+          pnpm licenses list --json | jq -r '.[] | select(.license == null or (.license | test("MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC") | not)) | .name' > unlicensed_deps.txt
+          if [ -s unlicensed_deps.txt ]; then
+            echo "⚠️  Dependencies with potentially problematic licenses:"
+            cat unlicensed_deps.txt
+          else
+            echo "✅ All dependencies have acceptable licenses"
+          fi
+
+  codeql-weekly:
+    name: "CodeQL Weekly Scan"
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript', 'typescript', 'python']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: \${{ matrix.language }}
+          config-file: ./.github/codeql-config.yml
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:\${{ matrix.language }}"\n`,
   },
 
   // ===== GOVERNANCE GROUP =====
@@ -504,26 +1021,76 @@ save-exact=false\n`,
   },
 
   {
+    id: ConfigFile.Funding,
+    displayName: 'Funding Links',
+    description: 'Sponsor and funding configuration',
+    group: ConfigGroup.Governance,
+    filePath: '.github/FUNDING.yml',
+    defaultEnabled: true,
+    priority: 95,
+    condition: (ctx) => ctx.hasGit,
+    template: `github: [kitium-ai]
+patreon: kitiumai
+open_collective: kitiumai
+ko_fi: kitiumai
+tidelift: npm/@kitiumai/root
+custom: ["https://kitiumai.com/sponsor", "https://opencollective.com/kitiumai"]\n`,
+  },
+
+  {
     id: ConfigFile.PullRequestTemplate,
     displayName: 'PR Template',
     description: 'Pull request template',
     group: ConfigGroup.Governance,
-    filePath: '.github/pull_request_template.md',
+    filePath: '.github/PULL_REQUEST_TEMPLATE.md',
     defaultEnabled: true,
     priority: 90,
     condition: (ctx) => ctx.hasGit,
-    template: `## Summary
-- [ ] Ready for review
-- [ ] Includes tests
-- [ ] Documentation updated
+    template: `# Pull Request Template
 
-## Changes
-- Describe the key changes
+## Description
+Brief description of the changes made in this PR.
 
-## Testing
-- [ ] pnpm test
-- [ ] pnpm lint
-- [ ] pnpm run security:secrets\n`,
+## Type of Change
+- [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
+- [ ] ✨ New feature (non-breaking change which adds functionality)
+- [ ] 💥 Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] 📚 Documentation update
+- [ ] 🎨 Style/UX improvements
+- [ ] 🔧 Refactoring (no functional changes)
+- [ ] 🧪 Tests (adding/updating tests)
+- [ ] 🔒 Security improvements
+- [ ] 🚀 Performance improvements
+- [ ] 🏗️ Build/CI improvements
+
+## Changes Made
+### What was changed?
+- Detailed description of changes
+
+### Why was this changed?
+- Rationale for the changes
+
+### How was this tested?
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] Manual testing performed
+- [ ] Existing tests pass
+
+## Screenshots (if applicable)
+<!-- Add screenshots to help explain your changes -->
+
+## Checklist
+- [ ] My code follows the project's style guidelines
+- [ ] I have performed a self-review of my own code
+- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] I have made corresponding changes to the documentation
+- [ ] My changes generate no new warnings
+- [ ] I have added tests that prove my fix is effective or that my feature works
+- [ ] New and existing unit tests pass locally with my changes
+- [ ] Any dependent changes have been merged and published in downstream modules
+
+## Additional Notes
+<!-- Any additional information or context about this PR -->\n`,
   },
 
   {
@@ -531,27 +1098,94 @@ save-exact=false\n`,
     displayName: 'Bug Report Template',
     description: 'Issue template for bug reports',
     group: ConfigGroup.Governance,
-    filePath: '.github/ISSUE_TEMPLATE/bug_report.md',
+    filePath: '.github/ISSUE_TEMPLATES/bug_report.yml',
     defaultEnabled: true,
     priority: 80,
     condition: (ctx) => ctx.hasGit,
     template: `---
-name: "Bug report"
-about: Report a bug or regression
-title: "[Bug] "
-labels: bug
----
+name: Bug Report
+about: Create a report to help us improve
+title: "[BUG] "
+labels: ["bug", "triage"]
+assignees: []
 
-## Expected behavior
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
 
-## Current behavior
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what you were trying to do and what happened instead.
+    validations:
+      required: true
 
-## Steps to reproduce
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
 
-## Environment
-- OS:
-- Node version:
-- Package version:\n`,
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - Critical (blocks core functionality)
+        - High (major feature broken)
+        - Medium (feature impaired)
+        - Low (minor issue)
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Please provide details about your environment.
+      placeholder: "OS: Windows 11, Node: 18.17.0, pnpm: 8.6.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here.
+      placeholder: Screenshots, logs, or other relevant information.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please verify the following
+      options:
+        - label: I have searched for similar issues and confirmed this is not a duplicate
+          required: true
+        - label: I have provided clear reproduction steps
+          required: true
+        - label: I have included relevant environment details
+          required: true\n`,
   },
 
   {
@@ -559,25 +1193,76 @@ labels: bug
     displayName: 'Feature Request Template',
     description: 'Issue template for feature requests',
     group: ConfigGroup.Governance,
-    filePath: '.github/ISSUE_TEMPLATE/feature_request.md',
+    filePath: '.github/ISSUE_TEMPLATES/feature_request.yml',
     defaultEnabled: true,
     priority: 70,
     condition: (ctx) => ctx.hasGit,
     template: `---
-name: "Feature request"
-about: Suggest a new feature or improvement
-title: "[Feature] "
-labels: enhancement
----
+name: Feature Request
+about: Suggest an idea for this project
+title: "[FEATURE] "
+labels: ["enhancement", "triage"]
+assignees: []
 
-## Problem to solve
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature!
 
-## Proposed solution
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What's the problem this feature would solve?
+      placeholder: I'm always frustrated when...
+    validations:
+      required: true
 
-## Alternatives considered
--
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like.
+      placeholder: I would like to see...
+    validations:
+      required: true
 
-## Additional context\n`,
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Describe alternatives you've considered.
+      placeholder: I also considered...
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Nice to have
+        - Should have
+        - Must have
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context or screenshots about the feature request here.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please verify the following
+      options:
+        - label: This feature would benefit other users
+          required: true
+        - label: I have searched for similar feature requests
+          required: true\n`,
   },
 
   // ===== GIT HOOKS GROUP =====
@@ -698,58 +1383,40 @@ function generateSecurityWorkflow(_ctx: TemplateContext): string {
   return `name: Security
 
 on:
-  schedule:
-    - cron: '0 6 * * 1'
+  push:
+    branches: [main, develop]
   pull_request:
-    paths:
-      - 'pnpm-lock.yaml'
-      - 'package.json'
-      - '.gitleaks*'
-  workflow_dispatch:
+    branches: [main, develop]
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
-  audit:
+  security:
     runs-on: ubuntu-latest
+    container:
+      image: docker.io/ashishyd/kitiumai-dev:latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Shared setup (install + audit)
+        uses: ./.github/actions/kitium-shared-setup
         with:
-          version: 9
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Dependency audit (via @kitiumai/scripts)
-        run: >
-          pnpm exec node --input-type=module -e "import { auditDependencies } from '@kitiumai/scripts/security';
-            const summary = await auditDependencies({ severityThreshold: 'moderate' });
-            console.log(JSON.stringify(summary, null, 2));
-            const blocking = (summary.severityCounts?.critical || 0) + (summary.severityCounts?.high || 0) + (summary.severityCounts?.moderate || 0);
-            if (blocking > 0) { process.exit(1); }"
-  secrets:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Secret scan (gitleaks via @kitiumai/scripts)
-        run: >
-          pnpm exec node --input-type=module -e "import { scanSecrets } from '@kitiumai/scripts/security';
-            const result = await scanSecrets({ configPath: '.gitleaks.toml', failOnFinding: true });
-            if (result.findings?.length) { console.error(JSON.stringify(result.findings, null, 2)); process.exit(1); }"\n`;
+          run-security-audit: "true"
+          audit-allow-failure: "true"
+
+      - name: Install TruffleHog CLI
+        run: |
+          apt-get update
+          apt-get install -y python3-venv
+          python3 -m venv /tmp/trufflehog
+          /tmp/trufflehog/bin/pip install --no-cache-dir trufflehog
+
+      - name: Check for secrets with TruffleHog
+        run: |
+          /tmp/trufflehog/bin/trufflehog filesystem --no-update --fail --path .
+        continue-on-error: true\n`;
 }
 
 /**
@@ -769,30 +1436,20 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    container:
+      image: docker.io/ashishyd/kitiumai-dev:latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Shared setup (build, lint, test, typecheck)
+        uses: ./.github/actions/kitium-shared-setup
         with:
-          version: 9
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Verify shared configs
-        run: >
-          pnpm exec node --input-type=module -e "import { ensureSharedConfigs } from '@kitiumai/scripts/dx';
-            const results = await ensureSharedConfigs({ requireTsconfig: true, requireEslint: true });
-            const issues = results.flatMap((entry) => entry.issues || []);
-            if (issues.length) { console.error(issues.join('\\n')); process.exit(1); }
-            console.log('Shared configs verified');"
-      - name: Lint (via @kitiumai/scripts)
-        run: pnpm exec node --input-type=module -e "import { lintAll } from '@kitiumai/scripts/lint'; await lintAll(false);"
-      - name: Tests with coverage
-        run: pnpm exec node --input-type=module -e "import { runTestsCoverage } from '@kitiumai/scripts/test'; await runTestsCoverage();"
-      - name: Type check
-        run: pnpm exec tsc -b --noEmit\n`;
+          run-build: "true"
+          run-lint: "true"
+          lint-command: pnpm run lint
+          run-tests: "true"
+          test-command: pnpm run test
+          run-typecheck: "true"
+          typecheck-command: pnpm run typecheck\n`;
 }
 
 /**
@@ -803,6 +1460,9 @@ function generateReleaseWorkflow(ctx: TemplateContext): string {
 
 on:
   push:
+    tags:
+      - 'v*'
+  create:
     tags:
       - 'v*'
   workflow_dispatch:
@@ -845,21 +1505,13 @@ jobs:
           echo "Working directory: $(pwd)"
           echo "User: $(whoami)"
 
-      - name: Ensure pnpm available (corepack fallback)
-        run: |
-          if ! command -v pnpm >/dev/null 2>&1; then
-            echo "ℹ️ pnpm not found, enabling via corepack"
-            corepack enable
-            corepack prepare pnpm@8 -o /usr/local/bin/pnpm
-          fi
-
       - name: Get tag name
         id: tag
         run: |
-          if [ "\${{ github.event_name }}" = "push" ]; then
-            TAG_NAME="\${GITHUB_REF#refs/tags/}"
-          else
+          if [ "\${{ github.event_name }}" = "workflow_dispatch" ]; then
             TAG_NAME="\${{ inputs.tag }}"
+          else
+            TAG_NAME="\${GITHUB_REF#refs/tags/}"
           fi
           echo "tag=\${TAG_NAME}" >> "$GITHUB_OUTPUT"
           echo "Processing tag: $TAG_NAME"
@@ -871,20 +1523,13 @@ jobs:
           echo "version=\${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Extracted version: $VERSION"
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline --ignore-scripts
-
-      - name: Build package
-        run: |
-          pnpm run build
-
-      - name: Run tests
-        run: |
-          pnpm run test
-
-      - name: Run linting
-        run: |
-          pnpm run lint
+      - name: Shared setup (install + verify)
+        uses: ./.github/actions/kitium-shared-setup
+        with:
+          run-build: "true"
+          run-tests: "true"
+          run-lint: "true"
+          run-typecheck: "true"
 
       - name: Security checks
         run: |
@@ -1048,14 +1693,6 @@ jobs:
           echo "Working directory: $(pwd)"
           echo "User: $(whoami)"
 
-      - name: Ensure pnpm available (corepack fallback)
-        run: |
-          if ! command -v pnpm >/dev/null 2>&1; then
-            echo "ℹ️ pnpm not found, enabling via corepack"
-            corepack enable
-            corepack prepare pnpm@8 -o /usr/local/bin/pnpm
-          fi
-
       - name: Validate version format
         run: |
           VERSION="\${{ inputs.version }}"
@@ -1079,19 +1716,12 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline --ignore-scripts
-
-      - name: Build and test package
-        run: |
-          echo "🔨 Building package..."
-          pnpm run build
-
-          echo "🧪 Running tests..."
-          pnpm run test
-
-          echo "🔍 Running linting..."
-          pnpm run lint
+      - name: Shared setup (build, lint, test)
+        uses: ./.github/actions/kitium-shared-setup
+        with:
+          run-build: "true"
+          run-tests: "true"
+          run-lint: "true"
 
       - name: Update package.json version
         run: |
@@ -1130,6 +1760,110 @@ jobs:
           echo ""
           echo "The release workflow will now be triggered automatically."
           echo "Monitor the 'Release ${ctx.packageName}' workflow for the publishing status."\n`;
+}
+
+/**
+ * Helper to generate shared composite action content
+ */
+function generateSharedWorkflowAction(): string {
+  return `name: Kitium Shared Setup
+description: Install dependencies and run shared project tasks
+inputs:
+  working-directory:
+    description: Relative path to the project root
+    required: false
+    default: .
+  run-build:
+    description: Run build command
+    required: false
+    default: "false"
+  build-command:
+    description: Command to run for building
+    required: false
+    default: pnpm run build
+  run-lint:
+    description: Run lint command
+    required: false
+    default: "false"
+  lint-command:
+    description: Command to run for linting
+    required: false
+    default: pnpm run lint
+  run-tests:
+    description: Run tests command
+    required: false
+    default: "false"
+  test-command:
+    description: Command to run for tests
+    required: false
+    default: pnpm run test
+  run-typecheck:
+    description: Run type-check command
+    required: false
+    default: "false"
+  typecheck-command:
+    description: Command to run for type-checks
+    required: false
+    default: pnpm run typecheck
+  run-security-audit:
+    description: Run pnpm audit
+    required: false
+    default: "false"
+  audit-allow-failure:
+    description: Allow pnpm audit failures without failing workflow
+    required: false
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile --prefer-offline --ignore-scripts
+      shell: bash
+
+    - name: Build
+      if: ${{ inputs.run-build == 'true' }}
+      run: |
+        WORKDIR="${{ inputs.working-directory }}"
+        cd "$WORKDIR"
+        ${{ inputs.build-command }}
+      shell: bash
+
+    - name: Lint
+      if: ${{ inputs.run-lint == 'true' }}
+      run: |
+        WORKDIR="${{ inputs.working-directory }}"
+        cd "$WORKDIR"
+        ${{ inputs.lint-command }}
+      shell: bash
+
+    - name: Tests
+      if: ${{ inputs.run-tests == 'true' }}
+      run: |
+        WORKDIR="${{ inputs.working-directory }}"
+        cd "$WORKDIR"
+        ${{ inputs.test-command }}
+      shell: bash
+
+    - name: Type check
+      if: ${{ inputs.run-typecheck == 'true' }}
+      run: |
+        WORKDIR="${{ inputs.working-directory }}"
+        cd "$WORKDIR"
+        ${{ inputs.typecheck-command }}
+      shell: bash
+
+    - name: pnpm audit
+      if: ${{ inputs.run-security-audit == 'true' }}
+      run: |
+        if pnpm audit --audit-level moderate; then
+          exit 0
+        elif [ "${{ inputs.audit-allow-failure }}" = "true" ]; then
+          echo "pnpm audit detected issues but continuing as requested"
+          exit 0
+        else
+          exit 1
+        fi
+      shell: bash\n`;
 }
 
 /**

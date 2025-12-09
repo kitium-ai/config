@@ -1,32 +1,59 @@
 version: 2
 updates:
-  # NPM package dependencies
-  - package-ecosystem: 'npm'
-    directory: '/'
+  - package-ecosystem: "npm"
+    directory: "/"
     schedule:
-      interval: 'weekly'
-      day: 'monday'
-      time: '03:00'
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
     open-pull-requests-limit: 10
-    reviewers:
-      - 'tech-leads'
-    labels:
-      - 'dependencies'
-    allow:
-      - dependency-type: 'direct'
-      - dependency-type: 'indirect'
-    ignore:
-      # Optional: ignore major version updates for critical packages
-      # - dependency-name: "typescript"
-      #   update-types: ["version-update:semver-major"]
+    assignees: []
+    labels: ["deps", "automation"]
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    groups:
+      typescript:
+        patterns:
+          - "typescript"
+          - "@types/*"
+      eslint:
+        patterns:
+          - "eslint*"
+          - "@typescript-eslint/*"
+      testing:
+        patterns:
+          - "jest*"
+          - "@testing-library/*"
+          - "vitest*"
+      build-tools:
+        patterns:
+          - "turbo"
+          - "webpack*"
+          - "rollup*"
+          - "vite*"
 
-  # GitHub Actions
-  - package-ecosystem: 'github-actions'
-    directory: '/'
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
-      interval: 'weekly'
-      day: 'monday'
-      time: '04:00'
-    labels:
-      - 'dependencies'
-      - 'github-actions'
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels: ["ci", "automation"]
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  - package-ecosystem: "docker"
+    directory: "/dev-setup/.devcontainer"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    labels: ["docker", "automation"]
+    commit-message:
+      prefix: "docker"
+      include: "scope"
