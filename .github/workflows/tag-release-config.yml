@@ -75,9 +75,9 @@ jobs:
       - name: Shared setup (build, lint, test)
         uses: ./.github/actions/config-shared-setup
         with:
-          run-build: "true"
-          run-tests: "true"
-          run-lint: "true"
+          run-build: 'true'
+          run-tests: 'true'
+          run-lint: 'true'
 
       - name: Update package.json version
         run: |

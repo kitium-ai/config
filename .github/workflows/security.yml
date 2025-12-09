@@ -22,8 +22,8 @@ jobs:
       - name: Shared setup (install + audit)
         uses: ./.github/actions/config-shared-setup
         with:
-          run-security-audit: "true"
-          audit-allow-failure: "true"
+          run-security-audit: 'true'
+          audit-allow-failure: 'true'
 
       - name: Install TruffleHog CLI
         run: |

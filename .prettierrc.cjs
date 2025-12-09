@@ -1,1 +1,1 @@
-module.exports = require('@kitiumai/config/prettier.config.cjs');
+module.exports = require('./prettier.config.cjs');

@@ -69,11 +69,11 @@ jobs:
       - name: Shared setup (install + verify)
         uses: ./.github/actions/config-shared-setup
         with:
-          run-build: "true"
-          run-tests: "true"
-          run-lint: "true"
+          run-build: 'true'
+          run-tests: 'true'
+          run-lint: 'true'
           lint-command: pnpm run lint
-          run-typecheck: "true"
+          run-typecheck: 'true'
 
       - name: Security checks
         run: |

@@ -847,7 +847,7 @@ jobs:
       - name: Label PR based on branch
         uses: actions/labeler@v5
         with:
-          repo-token: \${{ secrets.GITHUB_TOKEN }}
+          repo-token: \\\$\{\{ secrets.GITHUB_TOKEN }}
           configuration-path: .github/labeler.yml
 
       - name: Auto-label PR size
@@ -859,7 +859,7 @@ jobs:
       - name: Label PR size
         uses: codelytv/pr-size-labeler@v1
         with:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: \\\$\{\{ secrets.GITHUB_TOKEN }}
           xs_label: 'size/xs'
           xs_max_size: 10
           s_label: 'size/s'
@@ -993,7 +993,7 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: \${{ matrix.language }}
+          languages: \\\$\{\{ matrix.language }}
           config-file: ./.github/codeql-config.yml
 
       - name: Autobuild
@@ -1002,7 +1002,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
-          category: "/language:\${{ matrix.language }}"\n`,
+          category: "/language:\\\$\{\{ matrix.language }}"\n`,
   },
 
   // ===== GOVERNANCE GROUP =====
@@ -1488,7 +1488,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: \${{ secrets.GITHUB_TOKEN }}
+          token: \\\$\{\{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Git
         run: |
@@ -1508,8 +1508,8 @@ jobs:
       - name: Get tag name
         id: tag
         run: |
-          if [ "\${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG_NAME="\${{ inputs.tag }}"
+          if [ "\\\$\{\{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG_NAME="\\\$\{\{ inputs.tag }}"
           else
             TAG_NAME="\${GITHUB_REF#refs/tags/}"
           fi
@@ -1519,7 +1519,7 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          VERSION=$(echo "\${{ steps.tag.outputs.tag }}" | sed 's/^v//')
+          VERSION=$(echo "\\\$\{\{ steps.tag.outputs.tag }}" | sed 's/^v//')
           echo "version=\${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Extracted version: $VERSION"
 
@@ -1538,7 +1538,7 @@ jobs:
       - name: Update package version
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
-          TARGET_VERSION="\${{ steps.version.outputs.version }}"
+          TARGET_VERSION="\\\$\{\{ steps.version.outputs.version }}"
 
           if [ "$CURRENT_VERSION" = "$TARGET_VERSION" ]; then
             echo "ℹ️ Version already set to $TARGET_VERSION, skipping npm version"
@@ -1549,7 +1549,7 @@ jobs:
 
       - name: Configure npm for trusted publishing
         env:
-          NPM_TOKEN: \${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: \\\$\{\{ secrets.NPM_TOKEN }}
         run: |
           if [ -z "$NPM_TOKEN" ]; then
             echo "❌ NPM_TOKEN is required for publishing"
@@ -1563,7 +1563,7 @@ jobs:
       - name: Check if version already published
         id: version_check
         run: |
-          VERSION="\${{ steps.version.outputs.version }}"
+          VERSION="\\\$\{\{ steps.version.outputs.version }}"
           PACKAGE_NAME="${ctx.packageName}"
 
           if npm view "\${PACKAGE_NAME}@\${VERSION}" version 2>/dev/null; then
@@ -1577,7 +1577,7 @@ jobs:
       - name: Publish to NPM
         if: steps.version_check.outputs.already_published != 'true'
         env:
-          NPM_TOKEN: \${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: \\\$\{\{ secrets.NPM_TOKEN }}
         run: |
           npm publish --access public --provenance
 
@@ -1585,31 +1585,31 @@ jobs:
         continue-on-error: true
         run: |
           pnpm exec kitiumai-config observability setup || echo "⚠️ Observability setup failed"
-          echo '{"bomFormat":"CycloneDX","specVersion":"1.5","version":1,"metadata":{"component":{"name":"${ctx.packageName}","version":"\${{ steps.version.outputs.version }}"}}}' > sbom.json
+          echo '{"bomFormat":"CycloneDX","specVersion":"1.5","version":1,"metadata":{"component":{"name":"${ctx.packageName}","version":"\\\$\{\{ steps.version.outputs.version }}"}}}' > sbom.json
 
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: \\\$\{\{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: \${{ steps.tag.outputs.tag }}
-          release_name: "${ctx.packageName} \${{ steps.version.outputs.version }}"
+          tag_name: \\\$\{\{ steps.tag.outputs.tag }}
+          release_name: "${ctx.packageName} \\\$\{\{ steps.version.outputs.version }}"
           body: |
-            ## 🚀 Release ${ctx.packageName}@\${{ steps.version.outputs.version }}
+            ## 🚀 Release ${ctx.packageName}@\\\$\{\{ steps.version.outputs.version }}
 
             ### Installation
             \`\`\`bash
-            npm install ${ctx.packageName}@\${{ steps.version.outputs.version }}
+            npm install ${ctx.packageName}@\\\$\{\{ steps.version.outputs.version }}
             # or
-            pnpm add ${ctx.packageName}@\${{ steps.version.outputs.version }}
+            pnpm add ${ctx.packageName}@\\\$\{\{ steps.version.outputs.version }}
             \`\`\`
 
             ### Documentation
             📖 [API Reference](https://github.com/kitiumai/config/blob/main/README.md)
 
             ### Security
-            🔒 [SBOM](https://github.com/kitiumai/config/releases/download/\${{ steps.tag.outputs.tag }}/sbom.json)
+            🔒 [SBOM](https://github.com/kitiumai/config/releases/download/\\\$\{\{ steps.tag.outputs.tag }}/sbom.json)
           draft: false
           prerelease: false
 
@@ -1617,9 +1617,9 @@ jobs:
         continue-on-error: true
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: \\\$\{\{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: \${{ steps.create_release.outputs.upload_url }}
+          upload_url: \\\$\{\{ steps.create_release.outputs.upload_url }}
           asset_path: sbom.json
           asset_name: sbom.json
           asset_content_type: application/json
@@ -1627,14 +1627,14 @@ jobs:
       - name: Notify on success
         if: success()
         run: |
-          echo "✅ Successfully released ${ctx.packageName}@\${{ steps.version.outputs.version }}"
-          echo "📦 Published to NPM: https://www.npmjs.com/package/${ctx.packageName}/v/\${{ steps.version.outputs.version }}"
-          echo "🏷️  GitHub Release: https://github.com/kitiumai/config/releases/tag/\${{ steps.tag.outputs.tag }}"
+          echo "✅ Successfully released ${ctx.packageName}@\\\$\{\{ steps.version.outputs.version }}"
+          echo "📦 Published to NPM: https://www.npmjs.com/package/${ctx.packageName}/v/\\\$\{\{ steps.version.outputs.version }}"
+          echo "🏷️  GitHub Release: https://github.com/kitiumai/config/releases/tag/\\\$\{\{ steps.tag.outputs.tag }}"
 
       - name: Notify on failure
         if: failure()
         run: |
-          echo "❌ Failed to release ${ctx.packageName}@\${{ steps.version.outputs.version }}"
+          echo "❌ Failed to release ${ctx.packageName}@\\\$\{\{ steps.version.outputs.version }}"
           echo "Please check the workflow logs for details"\n`;
 }
 
@@ -1676,7 +1676,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: \${{ secrets.GITHUB_TOKEN }}
+          token: \\\$\{\{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Git
         run: |
@@ -1695,7 +1695,7 @@ jobs:
 
       - name: Validate version format
         run: |
-          VERSION="\${{ inputs.version }}"
+          VERSION="\\\$\{\{ inputs.version }}"
           if [[ ! $VERSION =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
             echo "❌ Invalid version format: $VERSION"
             echo "Version must be in format: x.y.z (e.g., 1.0.0, 2.1.3)"
@@ -1706,7 +1706,7 @@ jobs:
       - name: Check if tag already exists
         id: check_tag
         run: |
-          TAG="v\${{ inputs.version }}"
+          TAG="v\\\$\{\{ inputs.version }}"
           if git tag -l | grep -q "^$TAG$"; then
             echo "❌ Tag $TAG already exists"
             echo "exists=true" >> "$GITHUB_OUTPUT"
@@ -1726,7 +1726,7 @@ jobs:
       - name: Update package.json version
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
-          TARGET_VERSION="\${{ inputs.version }}"
+          TARGET_VERSION="\\\$\{\{ inputs.version }}"
 
           if [ "$CURRENT_VERSION" = "$TARGET_VERSION" ]; then
             echo "ℹ️ Version already set to $TARGET_VERSION, skipping npm version"
@@ -1741,20 +1741,20 @@ jobs:
             echo "ℹ️ No changes to commit"
           else
             git add "package.json"
-            git commit -m "chore: bump ${ctx.packageName} to v\${{ inputs.version }}"
+            git commit -m "chore: bump ${ctx.packageName} to v\\\$\{\{ inputs.version }}"
             git push origin main
           fi
 
       - name: Create and push tag
         run: |
-          TAG="v\${{ inputs.version }}"
+          TAG="v\\\$\{\{ inputs.version }}"
           echo "🏷️  Creating tag: $TAG"
           git tag "$TAG"
           git push origin "$TAG"
 
       - name: Verify tag creation
         run: |
-          TAG="v\${{ inputs.version }}"
+          TAG="v\\\$\{\{ inputs.version }}"
           echo "✅ Tag created successfully: $TAG"
           echo "🔗 Tag URL: https://github.com/kitiumai/config/releases/tag/$TAG"
           echo ""
@@ -1821,43 +1821,43 @@ runs:
       shell: bash
 
     - name: Build
-      if: ${{ inputs.run-build == 'true' }}
+      if: \\$\{\{ inputs.run-build == 'true' }}
       run: |
-        WORKDIR="${{ inputs.working-directory }}"
+        WORKDIR="\\$\{\{ inputs.working-directory }}"
         cd "$WORKDIR"
-        ${{ inputs.build-command }}
+        \\$\{\{ inputs.build-command }}
       shell: bash
 
     - name: Lint
-      if: ${{ inputs.run-lint == 'true' }}
+      if: \\$\{\{ inputs.run-lint == 'true' }}
       run: |
-        WORKDIR="${{ inputs.working-directory }}"
+        WORKDIR="\\$\{\{ inputs.working-directory }}"
         cd "$WORKDIR"
-        ${{ inputs.lint-command }}
+        \\$\{\{ inputs.lint-command }}
       shell: bash
 
     - name: Tests
-      if: ${{ inputs.run-tests == 'true' }}
+      if: \\$\{\{ inputs.run-tests == 'true' }}
       run: |
-        WORKDIR="${{ inputs.working-directory }}"
+        WORKDIR="\\$\{\{ inputs.working-directory }}"
         cd "$WORKDIR"
-        ${{ inputs.test-command }}
+        \\$\{\{ inputs.test-command }}
       shell: bash
 
     - name: Type check
-      if: ${{ inputs.run-typecheck == 'true' }}
+      if: \\$\{\{ inputs.run-typecheck == 'true' }}
       run: |
-        WORKDIR="${{ inputs.working-directory }}"
+        WORKDIR="\\$\{\{ inputs.working-directory }}"
         cd "$WORKDIR"
-        ${{ inputs.typecheck-command }}
+        \\$\{\{ inputs.typecheck-command }}
       shell: bash
 
     - name: pnpm audit
-      if: ${{ inputs.run-security-audit == 'true' }}
+      if: \\$\{\{ inputs.run-security-audit == 'true' }}
       run: |
         if pnpm audit --audit-level moderate; then
           exit 0
-        elif [ "${{ inputs.audit-allow-failure }}" = "true" ]; then
+        elif [ "\\$\{\{ inputs.audit-allow-failure }}" = "true" ]; then
           echo "pnpm audit detected issues but continuing as requested"
           exit 0
         else

@@ -1,59 +1,59 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
     open-pull-requests-limit: 10
     assignees: []
-    labels: ["deps", "automation"]
+    labels: ['deps', 'automation']
     commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
-      include: "scope"
+      prefix: 'chore'
+      prefix-development: 'chore'
+      include: 'scope'
     groups:
       typescript:
         patterns:
-          - "typescript"
-          - "@types/*"
+          - 'typescript'
+          - '@types/*'
       eslint:
         patterns:
-          - "eslint*"
-          - "@typescript-eslint/*"
+          - 'eslint*'
+          - '@typescript-eslint/*'
       testing:
         patterns:
-          - "jest*"
-          - "@testing-library/*"
-          - "vitest*"
+          - 'jest*'
+          - '@testing-library/*'
+          - 'vitest*'
       build-tools:
         patterns:
-          - "turbo"
-          - "webpack*"
-          - "rollup*"
-          - "vite*"
+          - 'turbo'
+          - 'webpack*'
+          - 'rollup*'
+          - 'vite*'
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
     open-pull-requests-limit: 5
-    labels: ["ci", "automation"]
+    labels: ['ci', 'automation']
     commit-message:
-      prefix: "ci"
-      include: "scope"
+      prefix: 'ci'
+      include: 'scope'
 
-  - package-ecosystem: "docker"
-    directory: "/dev-setup/.devcontainer"
+  - package-ecosystem: 'docker'
+    directory: '/dev-setup/.devcontainer'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
     open-pull-requests-limit: 3
-    labels: ["docker", "automation"]
+    labels: ['docker', 'automation']
     commit-message:
-      prefix: "docker"
-      include: "scope"
+      prefix: 'docker'
+      include: 'scope'

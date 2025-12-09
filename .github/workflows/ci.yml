@@ -18,9 +18,9 @@ jobs:
       - name: Shared setup (build, lint, test, typecheck)
         uses: ./.github/actions/config-shared-setup
         with:
-          run-build: "true"
-          run-lint: "true"
+          run-build: 'true'
+          run-lint: 'true'
           lint-command: pnpm run lint:all
-          run-tests: "true"
+          run-tests: 'true'
           test-command: pnpm run test:coverage
-          run-typecheck: "true"
+          run-typecheck: 'true'
