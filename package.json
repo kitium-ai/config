@@ -1,6 +1,6 @@
 {
   "name": "@kitiumai/config",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "private": false,
   "description": "Shared configuration presets (TypeScript, formatting, and tooling) for the KitiumAI monorepo.",
   "type": "module",

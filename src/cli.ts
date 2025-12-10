@@ -8,6 +8,7 @@ import {
   ConfigGroup,
   TestFramework,
   type SetupChoices,
+  ConfigFile,
 } from './types.js';
 import { ConfigDetector } from './detector.js';
 import { ConfigPrompter } from './prompter.js';
@@ -306,6 +307,7 @@ class KitiumConfigCLI {
         configGroups: autoGroups,
         selectionMode: 'group' as const,
         overrideExisting: options.force,
+        forceRefreshConfigs: [ConfigFile.SecurityWorkflow],
         setupGitHooks: detection.hasGit,
         skipValidation: false,
         dryRun: options.dryRun,

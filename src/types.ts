@@ -182,6 +182,8 @@ export interface SetupChoices {
   /** Selection mode: 'group' (select by groups) or 'granular' (select individual files) */
   selectionMode?: 'group' | 'granular' | undefined;
   overrideExisting: boolean;
+  /** Configs that should always be refreshed even if overrideExisting is false */
+  forceRefreshConfigs?: ConfigFile[] | undefined;
   setupGitHooks: boolean;
   skipValidation: boolean;
   dryRun: boolean;

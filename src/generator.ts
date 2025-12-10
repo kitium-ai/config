@@ -264,9 +264,13 @@ export class ConfigGenerator {
     // Generate content
     const content = generateTemplateContent(config, context);
 
+    const forceRefresh = Boolean(
+      choices.forceRefreshConfigs && choices.forceRefreshConfigs.includes(config.id)
+    );
+
     // Write file
     const result = this.fileOps.writeFile(filePath, content, {
-      overrideExisting: choices.overrideExisting,
+      overrideExisting: choices.overrideExisting || forceRefresh,
       dryRun,
     });
 
