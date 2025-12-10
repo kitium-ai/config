@@ -309,7 +309,11 @@ class KitiumConfigCLI {
         setupGitHooks: detection.hasGit,
         skipValidation: false,
         dryRun: options.dryRun,
-        publicPackage: options.publicPackage ?? detection.type === PackageType.Library,
+        // Use explicit check for undefined to allow false to be passed
+        publicPackage:
+          options.publicPackage !== undefined
+            ? options.publicPackage
+            : detection.type === PackageType.Library,
         enableUiConfigs: false, // No UI configs (no Playwright) in auto mode
         testFramework: options.testFramework, // Use specified test framework, defaults to Vitest
       };

@@ -802,7 +802,9 @@ save-exact=false\n`,
     filePath: (ctx: TemplateContext) => `.github/workflows/release-${ctx.packageName}.yml`,
     defaultEnabled: true,
     priority: 90,
-    condition: (ctx) => ctx.hasGit && ctx.publicPackage,
+    // Release workflows are useful for both public and private packages
+    // (e.g., private npm registries, internal versioning)
+    condition: (ctx) => ctx.hasGit,
     dependencies: [ConfigFile.GithubSharedWorkflow],
     template: (ctx) => generateReleaseWorkflow(ctx),
   },
@@ -815,7 +817,9 @@ save-exact=false\n`,
     filePath: (ctx: TemplateContext) => `.github/workflows/tag-release-${ctx.packageName}.yml`,
     defaultEnabled: true,
     priority: 80,
-    condition: (ctx) => ctx.hasGit && ctx.publicPackage,
+    // Tag-release workflows are useful for both public and private packages
+    // (e.g., private npm registries, internal versioning)
+    condition: (ctx) => ctx.hasGit,
     dependencies: [ConfigFile.GithubSharedWorkflow],
     template: (ctx) => generateTagReleaseWorkflow(ctx),
   },
