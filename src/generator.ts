@@ -101,6 +101,10 @@ export class ConfigGenerator {
    * Derive whether git-related assets should be generated
    */
   private determineGitAvailability(choices: SetupChoices): boolean {
+    if (choices.includePipelines) {
+      return true;
+    }
+
     if (choices.setupGitHooks) {
       return true;
     }

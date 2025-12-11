@@ -184,6 +184,12 @@ export interface SetupChoices {
   overrideExisting: boolean;
   /** Configs that should always be refreshed even if overrideExisting is false */
   forceRefreshConfigs?: ConfigFile[] | undefined;
+  /** Force inclusion of CI/Security pipelines */
+  includePipelines?: boolean | undefined;
+  /** Whether we're running in migration mode */
+  migrate?: boolean | undefined;
+  /** Whether to include gitignore */
+  gitignoreOnly?: boolean | undefined;
   setupGitHooks: boolean;
   skipValidation: boolean;
   dryRun: boolean;
@@ -205,6 +211,26 @@ export interface CliOptions {
   testFramework: TestFramework;
   /** Enable granular file selection mode */
   granular?: boolean;
+  /** Force add CI/Security pipelines */
+  includePipelines?: boolean;
+  /** Enable migration flow */
+  migrate?: boolean;
+  /** Run GitHub security setup */
+  security?: boolean;
+  /** Include everything */
+  all?: boolean;
+  /** Configs only, no pipelines */
+  configOnly?: boolean;
+  /** Force Husky/lint-staged */
+  precommit?: boolean;
+  /** Force .gitignore */
+  gitignore?: boolean;
+  /** Requested test configs */
+  tests: {
+    vitest?: boolean;
+    jest?: boolean;
+    playwright?: boolean;
+  };
 }
 
 /**

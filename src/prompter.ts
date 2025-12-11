@@ -114,6 +114,7 @@ export class ConfigPrompter {
       selectedConfigFiles,
       selectionMode,
       overrideExisting,
+      includePipelines: false,
       setupGitHooks,
       skipValidation: false,
       dryRun: false,

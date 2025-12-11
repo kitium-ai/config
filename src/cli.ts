@@ -9,6 +9,7 @@ import {
   TestFramework,
   type SetupChoices,
   ConfigFile,
+  type DetectionResult,
 } from './types.js';
 import { ConfigDetector } from './detector.js';
 import { ConfigPrompter } from './prompter.js';
@@ -27,6 +28,45 @@ import {
   scanPii,
   generateLintReport,
 } from '@kitiumai/scripts';
+
+const PIPELINE_CONFIGS: ConfigFile[] = [
+  ConfigFile.GithubSharedWorkflow,
+  ConfigFile.GithubCi,
+  ConfigFile.GithubRelease,
+  ConfigFile.GithubTagRelease,
+  ConfigFile.GithubLabelPr,
+  ConfigFile.GithubDependencyReview,
+  ConfigFile.GithubWeeklyMaintenance,
+  ConfigFile.SecurityWorkflow,
+];
+
+const PIPELINE_SUPPORTING_CONFIGS: ConfigFile[] = [
+  ConfigFile.Dependabot,
+  ConfigFile.CodeqlConfig,
+  ConfigFile.DependencyReviewConfig,
+  ConfigFile.LabelerConfig,
+  ConfigFile.PrSizeLabeler,
+  ConfigFile.PullRequestTemplate,
+  ConfigFile.IssueTemplateBug,
+  ConfigFile.IssueTemplateFeature,
+  ConfigFile.IssueTemplateDocs,
+  ConfigFile.IssueTemplateSecurity,
+  ConfigFile.Funding,
+];
+
+const ALL_CONFIG_FILES = Object.values(ConfigFile) as ConfigFile[];
+const NON_PIPELINE_CONFIGS = ALL_CONFIG_FILES.filter(
+  (config) => !PIPELINE_CONFIGS.includes(config)
+);
+const AUTO_BASE_CONFIGS: ConfigFile[] = [
+  ConfigFile.TypeScript,
+  ConfigFile.Prettier,
+  ConfigFile.ESLint,
+  ConfigFile.TypeDoc,
+  ConfigFile.LintStaged,
+  ConfigFile.Husky,
+  ConfigFile.Gitignore,
+];
 
 /**
  * Enhanced CLI with better error handling, progress tracking, and analytics
@@ -285,29 +325,30 @@ class KitiumConfigCLI {
 
     // Get user choices
     let choices;
-    if (options.auto || options.force) {
+    const useAutoPreset = options.auto || options.force || options.all;
+
+    if (useAutoPreset) {
       this.logger.info('Using auto/force mode (non-interactive)');
       process.stdout.write(chalk.yellow('Using auto/force mode (non-interactive)\n\n'));
       // Auto mode: setup core configs, testing, CI, security, git, and git hooks
       const autoGroups = [
-        ConfigGroup.Core, // TypeScript, ESLint, Prettier
-        ConfigGroup.Testing, // Vitest (or selected test framework)
-        ConfigGroup.Ci, // GitHub Actions workflows
-        ConfigGroup.Security, // GitHub security, dependabot, gitleaks
+        ConfigGroup.Core,
+        ConfigGroup.Testing,
+        ConfigGroup.Docs,
+        ConfigGroup.GitHooks,
+        ConfigGroup.Git,
+        ConfigGroup.Ci,
+        ConfigGroup.Security,
       ];
-
-      // Add Git and GitHooks if in a git repository
-      if (detection.hasGit) {
-        autoGroups.push(ConfigGroup.Git); // .gitignore
-        autoGroups.push(ConfigGroup.GitHooks); // Husky, lint-staged
-      }
 
       choices = {
         packageType: detection.type,
         configGroups: autoGroups,
-        selectionMode: 'group' as const,
+        selectionMode: 'granular' as const,
+        selectedConfigFiles: [...AUTO_BASE_CONFIGS],
         overrideExisting: options.force,
-        forceRefreshConfigs: [ConfigFile.SecurityWorkflow],
+        includePipelines: options.includePipelines,
+        forceRefreshConfigs: [...AUTO_BASE_CONFIGS, ConfigFile.SecurityWorkflow],
         setupGitHooks: detection.hasGit,
         skipValidation: false,
         dryRun: options.dryRun,
@@ -323,10 +364,42 @@ class KitiumConfigCLI {
       const prompter = new ConfigPrompter(detection);
       this.logger.debug('Using interactive prompter with granular control support');
       process.stdout.write(chalk.cyan('Please answer the following questions:\n\n'));
-      choices = await prompter.prompt(options.granular);
+      const granularMode = options.granular;
+      choices = await prompter.prompt(granularMode);
       choices.publicPackage = options.publicPackage ?? choices.publicPackage;
       choices.enableUiConfigs = options.ui || choices.enableUiConfigs;
       choices.testFramework = options.testFramework; // Override with CLI option if specified
+      choices.includePipelines = choices.includePipelines || options.includePipelines;
+    }
+
+    if (useAutoPreset) {
+      this.applyAutoDefaults(choices, detection);
+    }
+
+    if (options.all) {
+      this.applyAllPreset(choices);
+    }
+
+    if (options.includePipelines && !options.configOnly) {
+      this.applyPipelinePreference(choices);
+    }
+
+    if (options.configOnly) {
+      this.applyConfigOnlyPreference(choices);
+    }
+
+    if (options.precommit) {
+      this.applyPrecommitPreference(choices);
+    }
+
+    if (options.gitignore) {
+      this.applyGitignorePreference(choices);
+    }
+
+    this.applyTestPreferences(choices, options);
+
+    if (options.migrate) {
+      this.applyMigrationMode(choices);
     }
 
     // Generate configurations
@@ -345,9 +418,140 @@ class KitiumConfigCLI {
 
     printResults(result, choices, options.dryRun);
 
-    // Run GitHub security setup in auto mode if in a git repository
-    if ((options.auto || options.force) && detection.hasGit && !options.dryRun) {
+    const shouldRunSecuritySetup =
+      detection.hasGit &&
+      !options.dryRun &&
+      !options.configOnly &&
+      (options.security || options.all || (useAutoPreset && !options.migrate));
+
+    if (shouldRunSecuritySetup) {
       await this.setupGitHubSecurity(detection.packageName);
+    }
+  }
+
+  private applyPipelinePreference(choices: SetupChoices): void {
+    this.ensureConfigGroup(choices, ConfigGroup.Ci);
+    this.ensureConfigGroup(choices, ConfigGroup.Security);
+    this.ensureConfigGroup(choices, ConfigGroup.Governance);
+
+    for (const configId of PIPELINE_CONFIGS) {
+      this.ensureConfigFile(choices, configId);
+    }
+
+    for (const configId of PIPELINE_SUPPORTING_CONFIGS) {
+      this.ensureConfigFile(choices, configId);
+    }
+
+    choices.includePipelines = true;
+  }
+
+  private applyMigrationMode(choices: SetupChoices): void {
+    choices.overrideExisting = true;
+    choices.migrate = true;
+    choices.selectionMode = 'granular';
+
+    for (const group of Object.values(ConfigGroup)) {
+      this.ensureConfigGroup(choices, group);
+    }
+
+    for (const configId of ALL_CONFIG_FILES) {
+      this.ensureConfigFile(choices, configId);
+    }
+
+    this.applyPipelinePreference(choices);
+  }
+
+  private ensureConfigGroup(choices: SetupChoices, group: ConfigGroup): void {
+    if (!choices.configGroups.includes(group)) {
+      choices.configGroups.push(group);
+    }
+  }
+
+  private ensureConfigFile(choices: SetupChoices, configId: ConfigFile): void {
+    const refreshSet = new Set<ConfigFile>(choices.forceRefreshConfigs ?? []);
+    refreshSet.add(configId);
+    choices.forceRefreshConfigs = Array.from(refreshSet);
+
+    if (choices.selectionMode !== 'granular') {
+      return;
+    }
+
+    const selected = new Set<ConfigFile>(choices.selectedConfigFiles ?? []);
+    selected.add(configId);
+    choices.selectedConfigFiles = Array.from(selected);
+  }
+
+  private applyAutoDefaults(choices: SetupChoices, _detection: DetectionResult): void {
+    const requiredGroups = [
+      ConfigGroup.Core,
+      ConfigGroup.Testing,
+      ConfigGroup.Docs,
+      ConfigGroup.GitHooks,
+      ConfigGroup.Git,
+    ];
+
+    for (const group of requiredGroups) {
+      this.ensureConfigGroup(choices, group);
+    }
+
+    for (const configId of AUTO_BASE_CONFIGS) {
+      this.ensureConfigFile(choices, configId);
+    }
+
+    choices.setupGitHooks = true;
+    choices.includePipelines = true;
+    choices.enableUiConfigs = false;
+    choices.testFramework = choices.testFramework || TestFramework.Vitest;
+  }
+
+  private applyAllPreset(choices: SetupChoices): void {
+    this.ensureConfigFile(choices, ConfigFile.Playwright);
+    choices.enableUiConfigs = true;
+  }
+
+  private applyConfigOnlyPreference(choices: SetupChoices): void {
+    choices.selectionMode = 'granular';
+    for (const group of Object.values(ConfigGroup)) {
+      if (group === ConfigGroup.Ci || group === ConfigGroup.Security) {
+        continue;
+      }
+      this.ensureConfigGroup(choices, group);
+    }
+
+    for (const configId of NON_PIPELINE_CONFIGS) {
+      this.ensureConfigFile(choices, configId);
+    }
+
+    choices.includePipelines = false;
+  }
+
+  private applyPrecommitPreference(choices: SetupChoices): void {
+    this.ensureConfigGroup(choices, ConfigGroup.GitHooks);
+    choices.setupGitHooks = true;
+    this.ensureConfigFile(choices, ConfigFile.LintStaged);
+    this.ensureConfigFile(choices, ConfigFile.Husky);
+  }
+
+  private applyGitignorePreference(choices: SetupChoices): void {
+    this.ensureConfigGroup(choices, ConfigGroup.Git);
+    this.ensureConfigFile(choices, ConfigFile.Gitignore);
+  }
+
+  private applyTestPreferences(choices: SetupChoices, options: CliOptions): void {
+    if (options.tests.vitest) {
+      this.ensureConfigGroup(choices, ConfigGroup.Testing);
+      this.ensureConfigFile(choices, ConfigFile.Vitest);
+    }
+
+    if (options.tests.jest) {
+      this.ensureConfigGroup(choices, ConfigGroup.Testing);
+      this.ensureConfigFile(choices, ConfigFile.Jest);
+    }
+
+    if (options.tests.playwright) {
+      this.ensureConfigGroup(choices, ConfigGroup.Testing);
+      this.ensureConfigFile(choices, ConfigFile.Playwright);
+      choices.enableUiConfigs = true;
     }
   }
 
@@ -932,7 +1136,16 @@ function parseCliArgs(args: string[]): CliOptions {
     ui: false,
     testFramework: TestFramework.Vitest, // Default to Vitest
     granular: false,
+    includePipelines: false,
+    migrate: false,
+    security: false,
+    all: false,
+    configOnly: false,
+    precommit: false,
+    gitignore: false,
+    tests: {},
   };
+  let testFrameworkExplicit = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -943,34 +1156,86 @@ function parseCliArgs(args: string[]): CliOptions {
 
     if (arg === '--auto') {
       options.auto = true;
+      options.includePipelines = options.configOnly ? false : true;
+      options.gitignore = true;
+      options.precommit = true;
+      if (!testFrameworkExplicit) {
+        options.tests.vitest = true;
+      }
+    } else if (arg === '--all') {
+      options.all = true;
+      options.auto = true;
+      options.includePipelines = options.configOnly ? false : true;
+      options.security = true;
+      options.precommit = true;
+      options.gitignore = true;
+      if (!testFrameworkExplicit) {
+        options.tests.vitest = true;
+      }
+      options.tests.playwright = true;
+      options.ui = true;
     } else if (arg === '--dry-run') {
       options.dryRun = true;
     } else if (arg === '--force') {
       options.force = true;
+      if (!testFrameworkExplicit) {
+        options.tests.vitest = true;
+      }
     } else if (arg === '--public') {
       options.publicPackage = true;
     } else if (arg === '--ui') {
       options.ui = true;
     } else if (arg === '--granular') {
       options.granular = true;
+    } else if (arg === '--config-only') {
+      options.configOnly = true;
+      options.includePipelines = false;
+    } else if (arg === '--pipelines' || arg === '--include-pipelines') {
+      options.includePipelines = true;
+    } else if (arg === '--security') {
+      options.security = true;
+    } else if (arg === '--migrate') {
+      options.migrate = true;
+      options.granular = true;
+    } else if (arg === '--precommit') {
+      options.precommit = true;
+    } else if (arg === '--gitignore') {
+      options.gitignore = true;
     } else if (arg === '--jest') {
       options.testFramework = TestFramework.Jest;
+      options.tests.jest = true;
+      options.tests.vitest = false;
+      testFrameworkExplicit = true;
     } else if (arg === '--vitest') {
       options.testFramework = TestFramework.Vitest;
+      options.tests.vitest = true;
+      options.tests.jest = false;
+      testFrameworkExplicit = true;
     } else if (arg === '--mocha') {
       options.testFramework = TestFramework.Mocha;
+      testFrameworkExplicit = true;
     } else if (arg === '--jasmine') {
       options.testFramework = TestFramework.Jasmine;
+      testFrameworkExplicit = true;
     } else if (arg === '--ava') {
       options.testFramework = TestFramework.Ava;
+      testFrameworkExplicit = true;
     } else if (arg === '--tape') {
       options.testFramework = TestFramework.Tape;
+      testFrameworkExplicit = true;
+    } else if (arg === '--playwright') {
+      options.tests.playwright = true;
+      options.ui = true;
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
       process.exit(0);
     } else if (!arg.startsWith('-')) {
       options.targetDir = resolve(arg);
     }
+  }
+
+  if (options.configOnly) {
+    options.includePipelines = false;
   }
 
   return options;
@@ -999,19 +1264,27 @@ ${chalk.bold('Commands:')}
   ${chalk.cyan('doctor')}       Diagnose and fix configuration issues
 
 ${chalk.bold('Setup Options:')}
-  --auto              Non-interactive mode with defaults (includes GitHub security setup)
-  --dry-run          Show what would be changed without making changes
-  --force            Override existing files without prompting
-  --public           Mark package as public (adds publish config, governance files)
-  --ui               Include UI tooling (Playwright e2e, Storybook docs) in auto/force mode
-  --granular         Enable granular file selection mode (choose individual config files)
-  --vitest           Use Vitest for testing (default)
-  --jest             Use Jest for testing
-  --mocha            Use Mocha for testing
-  --jasmine          Use Jasmine for testing
-  --ava              Use AVA for testing
-  --tape             Use Tape for testing
-  --help, -h         Show this help message
+  --auto              Non-interactive defaults (Vitest, ESLint, Prettier, Typedoc, Husky, pipelines)
+  --all               Everything auto provides plus Playwright and security hardening
+  --config-only       Regenerate every config (no GitHub workflows or security setup)
+  --dry-run           Show what would be changed without making changes
+  --force             Override existing files without prompting
+  --public            Mark package as public (adds publish config, governance files)
+  --ui                Include UI tooling (Playwright e2e, Storybook docs)
+  --pipelines         Force-add GitHub CI/Security workflows
+  --security          Run GitHub security & branch-protection setup
+  --precommit         Always configure Husky + lint-staged
+  --gitignore         Ensure .gitignore is generated/refreshed
+  --migrate           Interactive migration mode: choose configs to regenerate/override
+  --granular          Enable granular file selection mode (choose individual config files)
+  --vitest            Ensure Vitest config is generated
+  --jest              Ensure Jest config is generated
+  --playwright        Ensure Playwright config & UI tooling are generated
+  --mocha             Use Mocha for testing
+  --jasmine           Use Jasmine for testing
+  --ava               Use AVA for testing
+  --tape              Use Tape for testing
+  --help, -h          Show this help message
 
 ${chalk.bold('Security Subcommands:')}
   check              Run all security checks

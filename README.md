@@ -149,26 +149,43 @@ kitiumai-config [options] [target-dir]
 
 ### Core Options
 
-| Option       | Description                                    |
-| ------------ | ---------------------------------------------- |
-| `--auto`     | Non-interactive mode with intelligent defaults |
-| `--dry-run`  | Preview changes without applying them          |
-| `--force`    | Override existing files without prompting      |
-| `--public`   | Configure for public package publishing        |
-| `--ui`       | Include UI tooling (Playwright, Storybook)     |
-| `--granular` | Enable granular file selection mode            |
-| `--help, -h` | Show help message                              |
+| Option          | Description                                                                 |
+| --------------- | --------------------------------------------------------------------------- |
+| `--auto`        | Non-interactive defaults (TS, ESLint, Prettier, Vitest, Typedoc, Husky, CI) |
+| `--all`         | Everything auto provides plus Playwright/UI tooling and security hardening  |
+| `--dry-run`     | Preview changes without applying them                                       |
+| `--force`       | Override existing files without prompting                                   |
+| `--public`      | Configure for public package publishing                                     |
+| `--ui`          | Include UI tooling (Playwright, Storybook)                                  |
+| `--granular`    | Enable granular file selection mode                                         |
+| `--config-only` | Regenerate configs only (skip GitHub workflows/security setup)              |
+| `--pipelines`   | Force-add all GitHub workflows, labelers, Dependabot, and templates         |
+| `--security`    | Run GitHub security + branch protection scripts after generation            |
+| `--precommit`   | Always configure Husky + lint-staged even outside auto mode                 |
+| `--gitignore`   | Refresh `.gitignore` regardless of detection                                |
+| `--migrate`     | Migration assistant that re-generates every config with overrides           |
+| `--help, -h`    | Show help message                                                           |
 
 ### Test Framework Options
 
-| Option      | Description                      |
-| ----------- | -------------------------------- |
-| `--vitest`  | Use Vitest for testing (default) |
-| `--jest`    | Use Jest for testing             |
-| `--mocha`   | Use Mocha for testing            |
-| `--jasmine` | Use Jasmine for testing          |
-| `--ava`     | Use AVA for testing              |
-| `--tape`    | Use Tape for testing             |
+| Option         | Description                                           |
+| -------------- | ----------------------------------------------------- |
+| `--vitest`     | Use Vitest for testing (default for auto/force/all)   |
+| `--jest`       | Use Jest for testing                                  |
+| `--mocha`      | Use Mocha for testing                                 |
+| `--jasmine`    | Use Jasmine for testing                               |
+| `--ava`        | Use AVA for testing                                   |
+| `--tape`       | Use Tape for testing                                  |
+| `--playwright` | Force Playwright e2e setup (also toggled via `--all`) |
+
+### Presets & Workflow Controls
+
+- `--auto`: Installs TypeScript, ESLint, Prettier, Vitest, Typedoc, Husky/lint-staged, `.gitignore`, and every shared GitHub workflow (CI, release, tag-release, labeler, dependency-review, weekly maintenance) plus supporting configs (Dependabot, CodeQL configuration, PR/Issue templates, funding, label rules). GitHub security setup runs automatically when git metadata is present.
+- `--all`: Extends auto by enabling Playwright + UI tooling and running security hardening regardless of detection.
+- `--config-only`: Ensures every non-workflow config (core tooling, docs, governance, git hooks, etc.) is regenerated without touching `.github` workflows; combine with `--pipelines` later if you want to add workflows.
+- `--pipelines`: Can be paired with interactive/granular runs to inject the full shared workflow suite without needing `--auto`.
+- `--migrate`: Switches to granular mode, re-selects every configuration file, and overrides existing content for a full refresh.
+- `--security`, `--precommit`, `--gitignore`, and the test flags can be mixed with any mode to enforce those outcomes explicitly.
 
 ## 🎯 Auto Mode Features
 
@@ -189,6 +206,7 @@ When using `--auto` or `--force` flags, the setup automatically:
 ### CI/CD Pipeline
 
 - **GitHub Actions**: Complete CI/CD workflows
+- **Supporting automation**: Labeler, PR-size labeler, dependency review, PR & Issue templates, Dependabot
 - **Matrix builds**: Multi-Node.js version testing
 - **Security scanning**: Automated vulnerability checks
 - **Release automation**: Semantic versioning
